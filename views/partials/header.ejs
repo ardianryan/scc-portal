@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle + ' - ' : '' %>SCC::CTF Registration Portal</title>
+  <link rel="icon" type="image/png" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand-wrapper">
+      <img src="/img/logo.png" alt="SCC Logo" class="brand-logo">
+      <div class="brand-title">
+        SCC<span class="brand-colon">::</span>CTF
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="/pedoman" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'wizard' ? 'active' : '' %>">Pedoman & Regulasi</a>
+      <a href="/register" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'register' ? 'active' : '' %>">Pendaftaran</a>
+      <a href="<%= config.GZCTF_PUBLIC_URL %>" target="_blank" rel="noopener noreferrer" class="nav-link">Platform CTF ↗</a>
+      <% if (locals.admin) { %>
+        <a href="/admin" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'admin' ? 'active' : '' %>">Panel Admin</a>
+        <a href="/admin/logout" class="nav-link">Logout</a>
+      <% } %>
+    </div>
+  </nav>
+
+  <main>

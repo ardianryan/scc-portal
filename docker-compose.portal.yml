@@ -1,0 +1,26 @@
+services:
+  portal-registrasi:
+    build:
+      context: ./portal-registrasi
+      dockerfile: Dockerfile
+    container_name: scc-ctf-portal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - GZCTF_URL=http://gzctf:80
+      - GZCTF_PUBLIC_URL=https://scc.sman1gedeg.sch.id/
+      - ADMIN_USER=admin
+      - ADMIN_PASS=SmansageCtf2026!
+      - SESSION_SECRET=scc-smansage-ctf-secret-session-key-2026
+    volumes:
+      - ./portal-registrasi/database:/app/database
+    networks:
+      - default
+
+networks:
+  default:
+    name: gzctf
+    external: true

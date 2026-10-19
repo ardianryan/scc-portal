@@ -1,0 +1,37 @@
+<%- include('partials/header', { pageTitle: 'Login Panitia', activeNav: 'login' }) %>
+
+<div class="container" style="max-width: 440px;">
+  <div class="gz-card">
+    <div class="gz-card-header" style="text-align: center;">
+      <img src="/img/logo.png" alt="Logo" style="height: 48px; width: auto; margin-bottom: 0.5rem;">
+      <div class="gz-card-title" style="justify-content: center;">Panel Panitia SCC::CTF</div>
+      <div class="gz-card-subtitle">Masuk untuk mengelola pendaftar & pengaturan sesi</div>
+    </div>
+
+    <% if (messages.error && messages.error.length > 0) { %>
+      <div class="alert alert-error">
+        <%= messages.error[0] %>
+      </div>
+    <% } %>
+
+    <form action="/admin/login" method="POST">
+      <div class="form-group">
+        <label class="form-label">Username Admin</label>
+        <input type="text" name="username" class="form-control" autocomplete="username" placeholder="admin" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary btn-block">
+          Masuk ke Panel Panitia
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

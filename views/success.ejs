@@ -1,0 +1,96 @@
+<%- include('partials/header', { pageTitle: 'Pendaftaran Berhasil', activeNav: 'register' }) %>
+
+<div class="container">
+  <div class="ticket-box">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+    <div class="ticket-title">Pendaftaran Berhasil!</div>
+    <p style="color: var(--text-muted); max-width: 520px; margin: 0 auto 1.5rem auto;">
+      Selamat! Biodata Anda telah resmi tercatat di sistem panitia dan akun kompetisi telah disinkronkan ke platform GZCTF.
+    </p>
+
+    <% if (participant.gzctf_status === 'success') { %>
+      <div class="alert alert-success" style="max-width: 480px; margin: 0 auto 1.5rem auto; text-align: left;">
+        <strong>Status Akun GZCTF:</strong> Akun berhasil diaktifkan di platform kompetisi. Anda dapat langsung login menggunakan kredensial di bawah.
+      </div>
+    <% } else { %>
+      <div class="alert alert-warning" style="max-width: 480px; margin: 0 auto 1.5rem auto; text-align: left;">
+        <strong>Catatan Sinkronisasi:</strong> Biodata tersimpan di panitia sekolah. Status sinkronisasi GZCTF: <code><%= participant.gzctf_status %></code>. Panitia akan memverifikasi akun Anda sebelum kompetisi dimulai.
+      </div>
+    <% } %>
+
+    <div class="ticket-data-box">
+      <div class="ticket-row">
+        <span class="ticket-key">Nama Peserta / Ketua:</span>
+        <span class="ticket-val"><%= participant.full_name %></span>
+      </div>
+      <% if (participant.team_name) { %>
+        <div class="ticket-row">
+          <span class="ticket-key">Nama Tim:</span>
+          <span class="ticket-val" style="color: var(--brand-primary);"><%= participant.team_name %></span>
+        </div>
+      <% } %>
+      <div class="ticket-row">
+        <span class="ticket-key">Asal Sekolah / Instansi:</span>
+        <span class="ticket-val"><%= participant.institution %></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-key">Kelas / Tingkat:</span>
+        <span class="ticket-val"><%= participant.class_grade || '-' %></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-key">Nomor WhatsApp:</span>
+        <span class="ticket-val"><%= participant.phone_wa %></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-key">Email:</span>
+        <span class="ticket-val"><%= participant.email %></span>
+      </div>
+      <div class="ticket-row">
+        <span class="ticket-key">Username Login GZCTF:</span>
+        <span class="ticket-val" style="color: var(--brand-light); font-size: 1.05rem;"><%= participant.username_gzctf %></span>
+      </div>
+    </div>
+
+    <% if (typeof teamMembers !== 'undefined' && teamMembers && teamMembers.length > 0) { %>
+      <div style="max-width: 580px; margin: 1.5rem auto; text-align: left;">
+        <h4 style="color: var(--brand-primary); margin-bottom: 0.5rem; font-size: 0.95rem;">👥 Akun Login Seluruh Anggota Tim</h4>
+        <div class="table-responsive">
+          <table class="gz-table" style="font-size: 0.8rem;">
+            <thead>
+              <tr>
+                <th>Nama Anggota</th>
+                <th>Username GZCTF</th>
+                <th>Status Akun</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: rgba(42, 229, 181, 0.05);">
+                <td><strong><%= participant.full_name %> (Ketua)</strong></td>
+                <td><code style="color: var(--brand-light);"><%= participant.username_gzctf %></code></td>
+                <td><span class="badge badge-success">Terkoneksi</span></td>
+              </tr>
+              <% teamMembers.forEach(m => { %>
+                <tr>
+                  <td><%= m.full_name %></td>
+                  <td><code style="color: var(--brand-light);"><%= m.username_gzctf %></code></td>
+                  <td><span class="badge badge-info">Tergabung Tim</span></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% } %>
+
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;">
+      <a href="<%= config.GZCTF_PUBLIC_URL %>" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
+        Buka Platform CTF Sekarang ↗
+      </a>
+      <button type="button" id="btnPrintTicket" class="btn btn-secondary" style="padding: 0.75rem 1.5rem;">
+        Cetak / Simpan Bukti (PDF)
+      </button>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

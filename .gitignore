@@ -1,0 +1,25 @@
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# Database SQLite local
+database/portal.db
+database/portal.db-journal
+*.db
+*.db-shm
+*.db-wal
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs & Runtime
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db

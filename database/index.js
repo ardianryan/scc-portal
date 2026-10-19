@@ -1,0 +1,190 @@
+const { DatabaseSync } = require('node:sqlite');
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcryptjs');
+const config = require('../config');
+
+const dbDir = path.join(__dirname);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, 'portal.db');
+const db = new DatabaseSync(dbPath);
+
+// Enable foreign keys
+db.exec('PRAGMA foreign_keys = ON;');
+
+// Inisialisasi tabel dari schema.sql
+const schemaPath = path.join(dbDir, 'schema.sql');
+if (fs.existsSync(schemaPath)) {
+  const schema = fs.readFileSync(schemaPath, 'utf8');
+  db.exec(schema);
+}
+
+// Auto-migration non-destruktif untuk kolom doc_url jika belum ada
+try {
+  const colCheck = db.prepare("PRAGMA table_info(participants)").all();
+  const hasDocUrl = colCheck.some(c => c.name === 'doc_url');
+  if (!hasDocUrl) {
+    db.exec("ALTER TABLE participants ADD COLUMN doc_url TEXT;");
+    console.log("[Database] Migration: Kolom doc_url berhasil ditambahkan ke tabel participants.");
+  }
+} catch (e) {
+  console.error("[Database] Migration doc_url check error:", e.message);
+}
+
+// Inisialisasi default admin jika belum ada
+const checkAdmin = db.prepare('SELECT id FROM admins WHERE username = ?').get(config.DEFAULT_ADMIN_USER);
+if (!checkAdmin) {
+  const hash = bcrypt.hashSync(config.DEFAULT_ADMIN_PASS, 10);
+  db.prepare('INSERT INTO admins (username, password_hash, name) VALUES (?, ?, ?)')
+    .run(config.DEFAULT_ADMIN_USER, hash, 'Administrator SCC::CTF');
+  console.log(`[Database] Default admin created: ${config.DEFAULT_ADMIN_USER}`);
+}
+
+// Import Crypto Service untuk Encryption at Rest
+const cryptoService = require('../services/cryptoService');
+
+const SENSITIVE_KEYS = ['smtp_pass'];
+
+module.exports = {
+  db,
+  
+  // Helper settings dengan dekripsi otomatis in-memory
+  getSettings() {
+    const rows = db.prepare('SELECT key, value FROM settings').all();
+    const settings = {};
+    for (const row of rows) {
+      if (SENSITIVE_KEYS.includes(row.key)) {
+        settings[row.key] = cryptoService.decrypt(row.value);
+      } else {
+        settings[row.key] = row.value;
+      }
+    }
+    return settings;
+  },
+
+  updateSetting(key, value) {
+    let finalValue = String(value);
+    // Enkripsi field sensitif sebelum ditulis ke disk SQLite
+    if (SENSITIVE_KEYS.includes(key) && value && value.trim() !== '') {
+      finalValue = cryptoService.encrypt(value);
+    }
+    return db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, finalValue);
+  },
+
+  // Helper peserta & tim
+  getParticipantByUsername(username) {
+    return db.prepare('SELECT * FROM participants WHERE username_gzctf = ?').get(username);
+  },
+
+  getParticipantByEmail(email) {
+    return db.prepare('SELECT * FROM participants WHERE email = ?').get(email);
+  },
+
+  getParticipantCount() {
+    const row = db.prepare('SELECT COUNT(*) as count FROM participants').get();
+    return row.count;
+  },
+
+  getTeamCount() {
+    const row = db.prepare('SELECT COUNT(*) as count FROM teams').get();
+    return row.count;
+  },
+
+  getAllParticipants() {
+    return db.prepare(`
+      SELECT p.*, t.team_name 
+      FROM participants p 
+      LEFT JOIN teams t ON p.team_id = t.id 
+      ORDER BY p.id DESC
+    `).all();
+  },
+
+  getAllTeams() {
+    return db.prepare(`
+      SELECT t.*, COUNT(p.id) as member_count 
+      FROM teams t 
+      LEFT JOIN participants p ON t.id = p.team_id 
+      GROUP BY t.id 
+      ORDER BY t.id DESC
+    `).all();
+  },
+
+  createIndividualParticipant(data) {
+    const stmt = db.prepare(`
+      INSERT INTO participants (
+        full_name, category, institution, nisn_or_id, class_grade, 
+        phone_wa, email, username_gzctf, gzctf_status, gzctf_error, 
+        is_team_leader, doc_url, registration_ip
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `);
+    
+    return stmt.run(
+      data.full_name, data.category, data.institution, data.nisn_or_id || '', 
+      data.class_grade || '', data.phone_wa, data.email, data.username_gzctf, 
+      data.gzctf_status || 'pending', data.gzctf_error || null, 
+      data.doc_url || null, data.registration_ip || ''
+    );
+  },
+
+  createTeamWithMembers(teamData, leaderData, membersData) {
+    // Jalankan transaksi manual
+    db.exec('BEGIN TRANSACTION;');
+    try {
+      const teamStmt = db.prepare(`
+        INSERT INTO teams (
+          team_name, team_token, institution, category, leader_name, contact_wa, email
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      
+      const teamResult = teamStmt.run(
+        teamData.team_name, teamData.team_token, teamData.institution, 
+        teamData.category, leaderData.full_name, leaderData.phone_wa, leaderData.email
+      );
+      const teamId = teamResult.lastInsertRowid;
+
+      // Insert leader (14 kolom dengan doc_url)
+      const partStmt = db.prepare(`
+        INSERT INTO participants (
+          team_id, full_name, category, institution, nisn_or_id, class_grade, 
+          phone_wa, email, username_gzctf, gzctf_status, gzctf_error, 
+          is_team_leader, doc_url, registration_ip
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      partStmt.run(
+        teamId, leaderData.full_name, teamData.category, teamData.institution,
+        leaderData.nisn_or_id || '', leaderData.class_grade || '', leaderData.phone_wa,
+        leaderData.email, leaderData.username_gzctf, leaderData.gzctf_status || 'pending',
+        leaderData.gzctf_error || null, 1, leaderData.doc_url || null, leaderData.registration_ip || ''
+      );
+
+      // Insert members if any
+      if (Array.isArray(membersData)) {
+        for (const m of membersData) {
+          if (m.full_name && m.email) {
+            partStmt.run(
+              teamId, m.full_name, teamData.category, teamData.institution,
+              m.nisn_or_id || '', m.class_grade || '', m.phone_wa || leaderData.phone_wa,
+              m.email, m.username_gzctf || `${leaderData.username_gzctf}_${Math.floor(Math.random()*1000)}`,
+              'member_only', null, 0, null, leaderData.registration_ip || ''
+            );
+          }
+        }
+      }
+
+      db.exec('COMMIT;');
+      return { teamId, success: true };
+    } catch (err) {
+      db.exec('ROLLBACK;');
+      throw err;
+    }
+  },
+
+  updateParticipantGzStatus(participantId, status, errorMsg = null) {
+    return db.prepare('UPDATE participants SET gzctf_status = ?, gzctf_error = ? WHERE id = ?')
+      .run(status, errorMsg, participantId);
+  }
+};

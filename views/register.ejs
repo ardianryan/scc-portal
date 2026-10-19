@@ -1,0 +1,244 @@
+<%- include('partials/header', { pageTitle: 'Pendaftaran Peserta', activeNav: 'register' }) %>
+
+<div class="container">
+  <!-- Step Indicator -->
+  <div style="margin-bottom: 1.5rem; text-align: center;">
+    <div style="display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="/pedoman" style="display: flex; align-items: center; gap: 0.4rem; color: #10b981; text-decoration: none; font-size: 0.85rem; font-weight: 600;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #10b981; color: #0c0d0d; font-size: 0.75rem;">✓</span>
+        <span>Pedoman & Regulasi</span>
+      </a>
+      <span style="color: var(--border-color);">&rarr;</span>
+      <div style="display: flex; align-items: center; gap: 0.4rem; color: var(--brand-primary); font-size: 0.85rem; font-weight: 700;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-primary); color: #0c0d0d; font-size: 0.75rem;">2</span>
+        <span>Formulir Pendaftaran</span>
+      </div>
+      <span style="color: var(--border-color);">&rarr;</span>
+      <div style="display: flex; align-items: center; gap: 0.4rem; color: var(--text-dim); font-size: 0.85rem;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bg-card-subtle); color: var(--text-muted); font-size: 0.75rem;">3</span>
+        <span>Akun GZCTF</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gz-card">
+    <div class="gz-card-header">
+      <div class="gz-card-title">
+        <img src="/img/logo.png" alt="Logo" style="height: 32px; width: auto;">
+        <span>Pendaftaran Peserta <%= settings.event_name || 'SCC::CTF 2026' %></span>
+      </div>
+      <div class="gz-card-subtitle">
+        Lengkapi formulir di bawah ini. Akun kompetisi Anda akan otomatis disinkronkan ke platform GZCTF.
+      </div>
+    </div>
+
+    <% if (messages.error && messages.error.length > 0) { %>
+      <div class="alert alert-error">
+        <strong>Peringatan:</strong> <%= messages.error[0] %>
+      </div>
+    <% } %>
+
+    <% if (messages.success && messages.success.length > 0) { %>
+      <div class="alert alert-success">
+        <strong>Sukses:</strong> <%= messages.success[0] %>
+      </div>
+    <% } %>
+
+    <% if (typeof statusCheck !== 'undefined' && !statusCheck.isOpen) { %>
+      <div class="alert alert-warning" style="text-align: center; display: block; padding: 2rem;">
+        <h3 style="color: #fbbf24; margin-bottom: 0.5rem;">Pendaftaran Tidak Tersedia</h3>
+        <p><%= statusCheck.reason %></p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">Silakan hubungi panitia kompetisi jika membutuhkan informasi lebih lanjut.</p>
+      </div>
+    <% } else { %>
+      <form action="/register" method="POST" id="regForm" enctype="multipart/form-data">
+        <!-- 1. KATEGORI & ASAL SEKOLAH -->
+        <div class="form-section-title">
+          <span>1. Asal & Kategori Peserta</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kategori Peserta <span class="req">*</span></label>
+          <select name="category" id="categorySelect" class="form-control" required>
+            <option value="internal" selected>Siswa Internal SMAN 1 Gedeg (SMANSAGE)</option>
+            <% if (settings.allowed_categories === 'all') { %>
+              <option value="external_school">Siswa Sekolah Lain (SMA / SMK / MA / Sederajat)</option>
+              <option value="general">Umum / Mahasiswa / Komunitas</option>
+            <% } %>
+          </select>
+        </div>
+
+        <!-- Field khusus Internal SMAN 1 Gedeg -->
+        <div id="internalFields">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tingkat / Kelas <span class="req">*</span></label>
+              <select name="class_grade_internal" id="classSelectInternal" class="form-control">
+                <option value="">-- Pilih Kelas --</option>
+                <option value="X">Kelas X</option>
+                <option value="XI">Kelas XI</option>
+                <option value="XII">Kelas XII</option>
+              </select>
+              <div class="form-hint">Siswa aktif SMAN 1 Gedeg.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">NISN Siswa SMANSAGE <span class="req">*</span></label>
+              <input type="text" name="nisn_internal" id="nisnInternal" class="form-control" placeholder="Contoh: 0071234567" maxlength="12">
+              <div class="form-hint">Digunakan untuk validasi silang data kesiswaan sekolah.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field khusus Sekolah Lain / Umum -->
+        <div id="externalFields" style="display: none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nama Sekolah / Universitas / Instansi <span class="req">*</span></label>
+              <input type="text" name="institution_external" id="instExternal" class="form-control" placeholder="Contoh: SMAN 2 Mojokerto">
+            </div>
+            <div class="form-group">
+              <label class="form-label">NISN / NIM / No. Identitas <span class="req">*</span></label>
+              <input type="text" name="nisn_external" id="nisnExternal" class="form-control" placeholder="Nomor Kartu Pelajar / Mahasiswa">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kelas / Jurusan / Semester</label>
+            <input type="text" name="class_grade_external" class="form-control" placeholder="Contoh: XI RPL 1 atau Teknik Informatika">
+          </div>
+        </div>
+
+        <!-- Unggah Dokumen Pendukung Identitas (S3 Upload) -->
+        <div class="form-group" style="margin-top: 1rem;">
+          <label class="form-label" id="docUploadLabel">
+            📄 Dokumen Pendukung Identitas <span id="docRequiredMark" style="display: none;" class="req">*</span>
+          </label>
+          <input type="file" name="identity_document" id="docUploadInput" class="form-control" accept="image/jpeg,image/png,image/webp,application/pdf">
+          <div class="form-hint" id="docUploadHint">
+            <strong>Internal SMANSAGE:</strong> Validasi otomatis melalui NISN (opsional upload kartu pelajar).<br>
+            <strong>Luar SMANSAGE / Umum:</strong> Wajib melampirkan foto/scan <strong>Kartu Pelajar, KTP, atau KTM</strong> aktif (JPG, PNG, PDF maks. 5MB).
+          </div>
+        </div>
+
+        <!-- 2. DATA TIM (JIKA MODE TIM) -->
+        <% if (settings.mode === 'team') { %>
+          <div class="form-section-title">
+            <span>2. Informasi Tim (Beregu)</span>
+            <span class="badge badge-info">Mode Tim: Maksimal <%= settings.max_team_members || 3 %> Orang</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nama Tim <span class="req">*</span></label>
+            <input type="text" name="team_name" class="form-control" placeholder="Contoh: GarudaCyberTeam" required>
+            <div class="form-hint">Nama tim unik yang akan tampil di scoreboard kompetisi.</div>
+          </div>
+
+          <div class="form-section-title" style="margin-top: 1.25rem;">
+            <span>Data Ketua Tim</span>
+          </div>
+        <% } else { %>
+          <div class="form-section-title">
+            <span>2. Biodata Peserta</span>
+            <span class="badge badge-success">Mode Individu</span>
+          </div>
+        <% } %>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap <span class="req">*</span></label>
+            <input type="text" name="full_name" class="form-control" placeholder="Nama lengkap sesuai identitas" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor WhatsApp Aktif <span class="req">*</span></label>
+            <input type="tel" name="phone_wa" class="form-control" placeholder="Contoh: 081234567890" required>
+            <div class="form-hint">Untuk koordinasi teknis dan pengumuman panitia.</div>
+          </div>
+        </div>
+
+        <!-- ANGGOTA TIM TAMBAHAN (JIKA MODE TIM) -->
+        <% if (settings.mode === 'team') { %>
+          <% const maxMembers = parseInt(settings.max_team_members || '3'); %>
+          <% for(let i = 2; i <= maxMembers; i++) { %>
+            <div class="form-section-title" style="font-size: 0.875rem; color: var(--text-muted); margin-top: 1rem;">
+              <span>Anggota <%= i %> (Opsional)</span>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nama Lengkap Anggota <%= i %></label>
+                <input type="text" name="member_name_<%= i %>" class="form-control" placeholder="Nama lengkap anggota <%= i %>">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Anggota <%= i %></label>
+                <input type="email" name="member_email_<%= i %>" class="form-control" placeholder="email_anggota@contoh.com">
+                <div class="form-hint">Kredensial login juga akan dikirim ke email ini.</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">NISN / Kartu Identitas</label>
+                <input type="text" name="member_nisn_<%= i %>" class="form-control" placeholder="Nomor NISN / Identitas">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Kelas / Tingkat</label>
+                <input type="text" name="member_class_<%= i %>" class="form-control" placeholder="Contoh: X-2 atau XI MIPA">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Username GZCTF Anggota <%= i %></label>
+                <input type="text" name="member_username_<%= i %>" class="form-control" placeholder="username_anggota_<%= i %>" pattern="^[a-zA-Z0-9_-]{3,24}$">
+                <div class="form-hint">Kosongkan jika ingin dibuatkan otomatis.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password Login Anggota <%= i %></label>
+                <input type="text" name="member_password_<%= i %>" class="form-control" placeholder="Password login anggota <%= i %>">
+                <div class="form-hint">Kosongkan jika ingin disamakan dengan password ketua.</div>
+              </div>
+            </div>
+          <% } %>
+        <% } %>
+
+        <!-- 3. AKUN GZCTF PLATFORM -->
+        <div class="form-section-title">
+          <span>3. Akun Login Platform GZCTF</span>
+        </div>
+
+        <div class="alert alert-info">
+          Informasi ini digunakan untuk login langsung ke server kompetisi <code><%= config.GZCTF_PUBLIC_URL %></code>.
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Username GZCTF <span class="req">*</span></label>
+            <input type="text" name="username_gzctf" class="form-control" placeholder="username_kamu" pattern="^[a-zA-Z0-9_-]{3,24}$" title="3-24 karakter, alfanumerik, garis bawah (_) atau strip (-)" required>
+            <div class="form-hint">3-24 karakter huruf, angka, atau garis bawah.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Akun <span class="req">*</span></label>
+            <input type="email" name="email" class="form-control" placeholder="nama@email.com" required>
+            <div class="form-hint">Gunakan email aktif (atau akun @sman1gedeg.sch.id / belajar.id).</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Password Akun <span class="req">*</span></label>
+            <input type="password" name="password" id="pwd" class="form-control" minlength="6" placeholder="Minimal 6 karakter" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ulangi Password <span class="req">*</span></label>
+            <input type="password" name="password_confirm" id="pwdConfirm" class="form-control" minlength="6" placeholder="Ulangi password di atas" required>
+            <div id="pwdMismatch" class="form-hint" style="color: var(--color-error); display: none;">Password tidak cocok!</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <button type="submit" class="btn btn-primary btn-block" style="padding: 0.85rem; font-size: 1.05rem;">
+            Daftar Sekarang & Sinkronkan Akun GZCTF
+          </button>
+        </div>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
