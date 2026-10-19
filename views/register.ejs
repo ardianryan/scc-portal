@@ -112,10 +112,45 @@
           <label class="form-label" id="docUploadLabel">
             📄 Dokumen Pendukung Identitas <span id="docRequiredMark" style="display: none;" class="req">*</span>
           </label>
-          <input type="file" name="identity_document" id="docUploadInput" class="form-control" accept="image/jpeg,image/png,image/webp,application/pdf">
+
+          <!-- Modern Drag & Drop Zone -->
+          <div class="file-dropzone" id="fileDropzone" tabindex="0" role="button" aria-label="Unggah Berkas Identitas">
+            <input type="file" name="identity_document" id="docUploadInput" class="file-dropzone-input" accept="image/jpeg,image/png,image/webp,application/pdf">
+            
+            <div class="dropzone-content" id="dropzoneEmpty">
+              <div class="dropzone-icon">
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                  <path d="M12 12v9"/>
+                  <path d="m8 16 4-4 4 4"/>
+                </svg>
+              </div>
+              <div class="dropzone-text">
+                <span class="dropzone-highlight">Klik untuk memilih berkas</span> atau seret & lepas ke sini
+              </div>
+              <div class="dropzone-subtext">
+                Mendukung JPG, PNG, WEBP, atau PDF (Maksimal 5 MB)
+              </div>
+            </div>
+
+            <!-- Preview State (Hidden by default) -->
+            <div class="dropzone-preview" id="dropzonePreview" style="display: none;">
+              <div class="preview-thumb-container" id="previewThumbContainer">
+                <!-- Image or PDF icon will be injected here -->
+              </div>
+              <div class="preview-details">
+                <div class="preview-name" id="previewFilename">nama-berkas.png</div>
+                <div class="preview-meta">
+                  <span id="previewFilesize">0 KB</span> &bull; <span class="badge badge-success" style="font-size: 0.7rem;">Siap Terunggah</span>
+                </div>
+              </div>
+              <button type="button" class="btn-remove-file" id="btnRemoveFile" title="Hapus Berkas">&times;</button>
+            </div>
+          </div>
+
           <div class="form-hint" id="docUploadHint">
             <strong>Internal SMANSAGE:</strong> Validasi otomatis melalui NISN (opsional upload kartu pelajar).<br>
-            <strong>Luar SMANSAGE / Umum:</strong> Wajib melampirkan foto/scan <strong>Kartu Pelajar, KTP, atau KTM</strong> aktif (JPG, PNG, PDF maks. 5MB).
+            <strong>Luar SMANSAGE / Umum:</strong> Wajib melampirkan foto/scan <strong>Kartu Pelajar, KTP, atau KTM</strong> aktif.
           </div>
         </div>
 
