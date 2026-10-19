@@ -4,7 +4,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 
-const dbDir = path.join(__dirname);
+const dbDir = process.env.DB_DIR ? path.resolve(process.env.DB_DIR) : path.join(__dirname);
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
@@ -15,8 +15,8 @@ const db = new DatabaseSync(dbPath);
 // Enable foreign keys
 db.exec('PRAGMA foreign_keys = ON;');
 
-// Inisialisasi tabel dari schema.sql
-const schemaPath = path.join(dbDir, 'schema.sql');
+// Inisialisasi tabel dari schema.sql (selalu baca dari direktori kode __dirname)
+const schemaPath = path.join(__dirname, 'schema.sql');
 if (fs.existsSync(schemaPath)) {
   const schema = fs.readFileSync(schemaPath, 'utf8');
   db.exec(schema);

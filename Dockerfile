@@ -15,12 +15,13 @@ RUN npm install --omit=dev
 # Copy application code
 COPY . .
 
-# Ensure storage / database directory exists
-RUN mkdir -p database
+# Ensure data directory for persistent SQLite storage exists
+RUN mkdir -p /app/data
 
 # Default environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV DB_DIR=/app/data
 
 # Expose HTTP port
 EXPOSE 3000
