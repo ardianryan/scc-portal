@@ -10,7 +10,7 @@ RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 COPY package*.json ./
 
 # Install production dependencies
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy application code
 COPY . .
