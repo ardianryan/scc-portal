@@ -64,6 +64,18 @@ const loginLimiter = rateLimit({
   message: 'Terlalu banyak percobaan login. Akun dikunci sementara 15 menit.'
 });
 
+// Security: Anti-Brute Force Limiter khusus Endpoint Cek NISN
+const nisnVerifyLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // Jendela 10 menit
+  max: 8, // Maksimal 8 kali verifikasi NISN per IP dalam 10 menit
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Terlalu banyak percobaan verifikasi NISN dari perangkat ini. Silakan coba lagi setelah 10 menit demi keamanan data sekolah.'
+  }
+});
+
 // View Engine
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -153,9 +165,17 @@ function checkRegistrationStatus(settings) {
   return { isOpen: true };
 }
 
-// Endpoint Ajax Real-time Verifikasi NISN Siswa SMAN 1 Gedeg
-app.post('/api/verify-gedeg', async (req, res) => {
+// Endpoint Ajax Real-time Verifikasi NISN Siswa SMAN 1 Gedeg (Terproteksi Anti-Bot & Session Wizard)
+app.post('/api/verify-gedeg', nisnVerifyLimiter, async (req, res) => {
   try {
+    // 1. Bot Protection: Wajib memiliki sesi aktif dan telah membaca pedoman
+    if (!req.session || !req.session.hasAcceptedWizard) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Anda harus membaca pedoman kompetisi terlebih dahulu.'
+      });
+    }
+
     const { nisn, full_name } = req.body;
     if (!nisn || !full_name) {
       return res.status(400).json({
@@ -164,7 +184,19 @@ app.post('/api/verify-gedeg', async (req, res) => {
       });
     }
 
-    const result = await scholargateService.verifyStudent(nisn, full_name);
+    // 2. Format Sanitization: NISN harus berupa angka 8-10 digit murni
+    const cleanNisn = nisn.toString().trim();
+    if (!/^[0-9]{8,12}$/.test(cleanNisn)) {
+      return res.json({
+        success: false,
+        message: 'Format NISN tidak valid (harus berupa 8-10 digit angka).'
+      });
+    }
+
+    // 3. Constant-time delay mikro untuk meredam timing-attack scanning bot
+    await new Promise(r => setTimeout(r, 350));
+
+    const result = await scholargateService.verifyStudent(cleanNisn, full_name);
     if (!result.valid) {
       return res.json({
         success: false,
