@@ -40,13 +40,19 @@ try {
   console.error("[Database] Migration column check error:", e.message);
 }
 
-// Inisialisasi default admin jika belum ada
-const checkAdmin = db.prepare('SELECT id FROM admins WHERE username = ?').get(config.DEFAULT_ADMIN_USER);
+// Inisialisasi atau sinkronisasi default admin jika belum ada / disinkronkan dari config
+const checkAdmin = db.prepare('SELECT id, password_hash FROM admins WHERE username = ?').get(config.DEFAULT_ADMIN_USER);
 if (!checkAdmin) {
   const hash = bcrypt.hashSync(config.DEFAULT_ADMIN_PASS, 10);
   db.prepare('INSERT INTO admins (username, password_hash, name) VALUES (?, ?, ?)')
     .run(config.DEFAULT_ADMIN_USER, hash, 'Administrator SCC::CTF');
   console.log(`[Database] Default admin created: ${config.DEFAULT_ADMIN_USER}`);
+} else if (process.env.RESET_ADMIN_PASS === 'true') {
+  // Opsi darurat untuk reset password admin dari ENV jika diminta
+  const hash = bcrypt.hashSync(config.DEFAULT_ADMIN_PASS, 10);
+  db.prepare('UPDATE admins SET password_hash = ? WHERE username = ?')
+    .run(hash, config.DEFAULT_ADMIN_USER);
+  console.log(`[Database] Admin password reset from environment variable: ${config.DEFAULT_ADMIN_USER}`);
 }
 
 // Import Crypto Service untuk Encryption at Rest

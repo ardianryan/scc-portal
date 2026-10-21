@@ -82,7 +82,7 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production' // true if behind HTTPS reverse proxy
+    secure: 'auto' // Otomatis deteksi HTTPS (aman di reverse proxy maupun direct HTTP IP)
   }
 }));
 
