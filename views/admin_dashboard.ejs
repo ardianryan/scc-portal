@@ -183,6 +183,36 @@
     </form>
   </div>
 
+  <!-- UBAH PASSWORD ADMIN -->
+  <div class="gz-card" style="margin-bottom: 2rem;">
+    <div class="gz-card-header">
+      <div class="gz-card-title">🔐 Ganti Password Akun Panitia</div>
+      <div class="gz-card-subtitle">Perbarui kata sandi login untuk administrator <strong><%= locals.admin ? locals.admin.username : 'admin' %></strong>.</div>
+    </div>
+
+    <form action="/admin/change-password" method="POST" style="max-width: 600px;">
+      <div class="form-group">
+        <label class="form-label">Password Lama <span class="req">*</span></label>
+        <input type="password" name="old_password" class="form-control" placeholder="Masukkan kata sandi lama Anda" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Password Baru <span class="req">*</span></label>
+          <input type="password" name="new_password" class="form-control" placeholder="Minimal 6 karakter" minlength="6" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Konfirmasi Password Baru <span class="req">*</span></label>
+          <input type="password" name="confirm_password" class="form-control" placeholder="Ketik ulang password baru" minlength="6" required>
+        </div>
+      </div>
+      <div style="margin-top: 1rem;">
+        <button type="submit" class="btn btn-secondary">
+          🔑 Perbarui Password Admin
+        </button>
+      </div>
+    </form>
+  </div>
+
   <!-- TABEL DATA PENDAFTAR -->
   <div class="gz-card">
     <div class="gz-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">

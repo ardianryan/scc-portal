@@ -570,6 +570,43 @@ app.post('/admin/settings', authAdmin, (req, res) => {
   res.redirect('/admin');
 });
 
+// Change Admin Password
+app.post('/admin/change-password', authAdmin, (req, res) => {
+  try {
+    const { old_password, new_password, confirm_password } = req.body;
+    const adminSession = req.session.admin;
+
+    if (!old_password || !new_password || !confirm_password) {
+      req.flash('error', 'Semua kolom kata sandi wajib diisi.');
+      return res.redirect('/admin');
+    }
+
+    if (new_password.length < 6) {
+      req.flash('error', 'Password baru minimal 6 karakter.');
+      return res.redirect('/admin');
+    }
+
+    if (new_password !== confirm_password) {
+      req.flash('error', 'Konfirmasi password baru tidak cocok.');
+      return res.redirect('/admin');
+    }
+
+    const adminRow = db.db.prepare('SELECT * FROM admins WHERE id = ?').get(adminSession.id);
+    if (!adminRow || !bcrypt.compareSync(old_password, adminRow.password_hash)) {
+      req.flash('error', 'Password lama Anda salah!');
+      return res.redirect('/admin');
+    }
+
+    const newHash = bcrypt.hashSync(new_password, 10);
+    db.db.prepare('UPDATE admins SET password_hash = ? WHERE id = ?').run(newHash, adminSession.id);
+
+    req.flash('success', 'Password admin berhasil diperbarui! Silakan gunakan password baru untuk login berikutnya.');
+  } catch (err) {
+    req.flash('error', 'Gagal mengubah password: ' + err.message);
+  }
+  res.redirect('/admin');
+});
+
 // Export Excel Rekap Pendaftar
 app.get('/admin/export', authAdmin, async (req, res) => {
   try {
