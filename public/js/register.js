@@ -240,6 +240,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================
+  // PASSWORD MATCHING & FORM SUBMIT VALIDATION
+  // ==========================================
+  const pwd = document.getElementById('pwd');
+  const pwdConfirm = document.getElementById('pwdConfirm');
+  const pwdMismatch = document.getElementById('pwdMismatch');
+  const regForm = document.getElementById('regForm');
+
   // Password matching validation
   if (pwd && pwdConfirm) {
     const checkPasswords = () => {
