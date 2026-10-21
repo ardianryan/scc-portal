@@ -85,7 +85,7 @@ class ExcelService {
         p.username_gzctf,
         p.gzctf_status === 'success' ? 'Terkoneksi GZCTF' : p.gzctf_status,
         p.team_name || (p.is_team_leader ? 'Individu' : '-'),
-        p.doc_url || '-'
+        p.doc_url ? p.doc_url : (p.is_gedeg_verified ? 'Terverifikasi Dapodik (Tanpa Berkas)' : '-')
       ];
 
       // Zebra striping

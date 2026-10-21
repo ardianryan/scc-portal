@@ -92,11 +92,29 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Cakupan / Kategori yang Diizinkan</label>
-          <select name="allowed_categories" class="form-control">
-            <option value="all" <%= settings.allowed_categories === 'all' ? 'selected' : '' %>>Semua (Internal SMANSAGE, Sekolah Lain, & Umum)</option>
-            <option value="internal_only" <%= settings.allowed_categories === 'internal_only' ? 'selected' : '' %>>Khusus Siswa SMAN 1 Gedeg Saja</option>
-          </select>
+          <label class="form-label">Tingkat / Jenjang Peserta yang Dibuka</label>
+          <% 
+            const levels = (settings.allowed_levels || 'sma_ma,smk,mahasiswa,general').split(',');
+          %>
+          <div style="display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.5rem; background: var(--bg-card-subtle); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="checkbox" name="level_sma_ma" value="1" <%= levels.includes('sma_ma') ? 'checked' : '' %>>
+              <span>🏫 SMA / MA</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="checkbox" name="level_smk" value="1" <%= levels.includes('smk') ? 'checked' : '' %>>
+              <span>🛠️ SMK</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="checkbox" name="level_mahasiswa" value="1" <%= levels.includes('mahasiswa') ? 'checked' : '' %>>
+              <span>🎓 Mahasiswa</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
+              <input type="checkbox" name="level_general" value="1" <%= levels.includes('general') ? 'checked' : '' %>>
+              <span>🌐 Umum / Komunitas</span>
+            </label>
+          </div>
+          <div class="form-hint">Pilih jenjang pendidikan yang diizinkan mendaftar kompetisi.</div>
         </div>
         <div class="form-group">
           <label class="form-label">Maksimal Anggota per Tim (Jika Mode Tim)</label>
@@ -236,6 +254,10 @@
                     <a href="<%= p.doc_url %>" target="_blank" rel="noopener noreferrer" class="badge badge-info" style="text-decoration: none; padding: 0.35rem 0.6rem;">
                       Lihat Berkas ↗
                     </a>
+                  <% } else if (p.is_gedeg_verified) { %>
+                    <span class="badge badge-success" title="Terverifikasi otomatis via Dapodik SMANSAGE">
+                      ✓ Dapodik Terverifikasi
+                    </span>
                   <% } else { %>
                     <span style="font-size: 0.75rem; color: var(--text-dim);">-</span>
                   <% } %>

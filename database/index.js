@@ -22,7 +22,7 @@ if (fs.existsSync(schemaPath)) {
   db.exec(schema);
 }
 
-// Auto-migration non-destruktif untuk kolom doc_url jika belum ada
+// Auto-migration non-destruktif untuk kolom doc_url dan is_gedeg_verified jika belum ada
 try {
   const colCheck = db.prepare("PRAGMA table_info(participants)").all();
   const hasDocUrl = colCheck.some(c => c.name === 'doc_url');
@@ -30,8 +30,14 @@ try {
     db.exec("ALTER TABLE participants ADD COLUMN doc_url TEXT;");
     console.log("[Database] Migration: Kolom doc_url berhasil ditambahkan ke tabel participants.");
   }
+
+  const hasGedegVerif = colCheck.some(c => c.name === 'is_gedeg_verified');
+  if (!hasGedegVerif) {
+    db.exec("ALTER TABLE participants ADD COLUMN is_gedeg_verified INTEGER DEFAULT 0;");
+    console.log("[Database] Migration: Kolom is_gedeg_verified berhasil ditambahkan ke tabel participants.");
+  }
 } catch (e) {
-  console.error("[Database] Migration doc_url check error:", e.message);
+  console.error("[Database] Migration column check error:", e.message);
 }
 
 // Inisialisasi default admin jika belum ada
@@ -117,15 +123,15 @@ module.exports = {
       INSERT INTO participants (
         full_name, category, institution, nisn_or_id, class_grade, 
         phone_wa, email, username_gzctf, gzctf_status, gzctf_error, 
-        is_team_leader, doc_url, registration_ip
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+        is_team_leader, doc_url, is_gedeg_verified, registration_ip
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
     `);
     
     return stmt.run(
       data.full_name, data.category, data.institution, data.nisn_or_id || '', 
       data.class_grade || '', data.phone_wa, data.email, data.username_gzctf, 
       data.gzctf_status || 'pending', data.gzctf_error || null, 
-      data.doc_url || null, data.registration_ip || ''
+      data.doc_url || null, data.is_gedeg_verified || 0, data.registration_ip || ''
     );
   },
 
@@ -145,20 +151,21 @@ module.exports = {
       );
       const teamId = teamResult.lastInsertRowid;
 
-      // Insert leader (14 kolom dengan doc_url)
+      // Insert leader (15 kolom dengan doc_url & is_gedeg_verified)
       const partStmt = db.prepare(`
         INSERT INTO participants (
           team_id, full_name, category, institution, nisn_or_id, class_grade, 
           phone_wa, email, username_gzctf, gzctf_status, gzctf_error, 
-          is_team_leader, doc_url, registration_ip
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          is_team_leader, doc_url, is_gedeg_verified, registration_ip
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       partStmt.run(
         teamId, leaderData.full_name, teamData.category, teamData.institution,
         leaderData.nisn_or_id || '', leaderData.class_grade || '', leaderData.phone_wa,
         leaderData.email, leaderData.username_gzctf, leaderData.gzctf_status || 'pending',
-        leaderData.gzctf_error || null, 1, leaderData.doc_url || null, leaderData.registration_ip || ''
+        leaderData.gzctf_error || null, 1, leaderData.doc_url || null, 
+        leaderData.is_gedeg_verified || 0, leaderData.registration_ip || ''
       );
 
       // Insert members if any
@@ -169,7 +176,7 @@ module.exports = {
               teamId, m.full_name, teamData.category, teamData.institution,
               m.nisn_or_id || '', m.class_grade || '', m.phone_wa || leaderData.phone_wa,
               m.email, m.username_gzctf || `${leaderData.username_gzctf}_${Math.floor(Math.random()*1000)}`,
-              'member_only', null, 0, null, leaderData.registration_ip || ''
+              'member_only', null, 0, null, 0, leaderData.registration_ip || ''
             );
           }
         }

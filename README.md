@@ -29,8 +29,13 @@ Acting as an intelligent middleware, the portal automates user registration, ide
 - **Team Mode**: Fully automated workflow provisioning team captain accounts, team creation via GZCTF API (`POST /api/team`), member account provisioning, and automatic team joining via invite tokens.
 
 ### 3. 🏫 Participant Classification & Identity Validation
-- **SMANSAGE Students**: Simplified grade selection (**Grade X**, **Grade XI**, and **Grade XII**) with student NISN verification.
-- **External Schools / General**: Requires uploading valid supporting identification documents (Student ID, National ID / KTP, or University Student ID / KTM).
+- **SMANSAGE Students (ScholarGate Dapodik Integration)**: Instant cross-verification via ScholarGate Identity API (`portal.sman1gedeg.sch.id`). Verifies active student status by NISN and validates name similarity (fuzzy matching algorithm) to prevent identity spoofing while preserving privacy (anti-oversharing). **Verified SMANSAGE students are exempt from uploading student ID cards.**
+- **Customizable Education Levels**: Admin can configure open competition brackets via dashboard checkboxes:
+  - 🏫 SMA / MA (Senior High School / Islamic Senior High)
+  - 🛠️ SMK (Vocational High School)
+  - 🎓 University / College Students
+  - 🌐 General / Open Community
+- **External Participants**: Requires uploading supporting identity documents (Student ID, National ID / KTP, or University ID / KTM).
 
 ### 4. ☁️ S3-Compatible Object Storage Uploads (IDCloudHost)
 - Direct asynchronous upload of identity verification documents to IDCloudHost S3 Object Storage (`is3.cloudhost.id`).
@@ -162,6 +167,8 @@ networks:
 | `S3_SECRET_KEY` | S3 API Secret Key | *Configured in .env* |
 | `S3_PATH_PREFIX` | Upload folder directory prefix | `/scc-ctfreg` |
 | `S3_PUBLIC_DOMAIN` | Public base URL for uploaded file previews | `https://is3-storage.smage.my.id` |
+| `SCHOLARGATE_API_URL` | SMAN 1 Gedeg ScholarGate Dapodik SSO API | `https://portal.sman1gedeg.sch.id` |
+| `SCHOLARGATE_API_KEY` | API Key for ScholarGate member lookup | *Configured in .env* |
 
 ---
 

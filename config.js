@@ -34,5 +34,9 @@ module.exports = {
   S3_ACCESS_KEY: process.env.S3_ACCESS_KEY || '',
   S3_SECRET_KEY: process.env.S3_SECRET_KEY || '',
   S3_PATH_PREFIX: (process.env.S3_PATH_PREFIX || '/scc-ctfreg').replace(/^\/+|\/+$/g, ''),
-  S3_PUBLIC_DOMAIN: (process.env.S3_PUBLIC_DOMAIN || 'https://is3-storage.smage.my.id').replace(/\/+$/, '')
+  S3_PUBLIC_DOMAIN: (process.env.S3_PUBLIC_DOMAIN || 'https://is3-storage.smage.my.id').replace(/\/+$/, ''),
+
+  // ScholarGate Identity (Dapodik SMAN 1 Gedeg API)
+  SCHOLARGATE_API_URL: process.env.SCHOLARGATE_API_URL || 'https://portal.sman1gedeg.sch.id',
+  SCHOLARGATE_API_KEY: process.env.SCHOLARGATE_API_KEY || ''
 };

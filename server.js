@@ -15,6 +15,7 @@ const excelService = require('./services/excelService');
 const contentService = require('./services/contentService');
 const mailService = require('./services/mailService');
 const storageService = require('./services/storageService');
+const scholargateService = require('./services/scholargateService');
 const authAdmin = require('./middleware/authAdmin');
 
 const app = express();
@@ -194,26 +195,31 @@ app.post('/register', registrationLimiter, (req, res, next) => {
     }
 
     let {
-      category,
+      level_grade,
+      is_gedeg_student,
+      institution,
+      nisn_or_id,
+      class_grade,
       full_name,
       phone_wa,
       email,
       username_gzctf,
       password,
       password_confirm,
-      team_name,
-      class_grade_internal,
-      nisn_internal,
-      institution_external,
-      class_grade_external,
-      nisn_external
+      team_name
     } = req.body;
+
+    const isGedeg = is_gedeg_student === '1' || is_gedeg_student === 'true';
+    level_grade = validator.trim(level_grade || 'sma_ma');
 
     // Sanitasi String Dasar
     full_name = validator.trim(full_name || '');
     email = validator.normalizeEmail(validator.trim(email || ''));
     username_gzctf = validator.trim(username_gzctf || '');
     phone_wa = validator.trim(phone_wa || '').replace(/[^0-9+]/g, '');
+    nisn_or_id = validator.trim(nisn_or_id || '');
+    class_grade = validator.trim(class_grade || '');
+    institution = validator.trim(institution || '');
 
     // 3. Validasi Keamanan & Input
     if (!full_name || full_name.length < 3 || full_name.length > 100) {
@@ -254,27 +260,36 @@ app.post('/register', registrationLimiter, (req, res, next) => {
       return res.redirect('/register');
     }
 
-    // Tentukan Institusi dan Kelas berdasarkan kategori
-    let finalInstitution = 'SMAN 1 Gedeg';
-    let finalClass = class_grade_internal;
-    let finalNisn = nisn_internal;
+    // Tentukan Institusi, Kategori, dan Validasi ScholarGate jika siswa SMAN 1 Gedeg
+    let finalCategory = isGedeg ? 'internal' : (level_grade === 'general' ? 'general' : 'external_school');
+    let finalInstitution = isGedeg ? 'SMAN 1 Gedeg' : institution;
+    let finalClass = class_grade || '-';
+    let finalNisn = nisn_or_id;
+    let isGedegVerified = 0;
 
-    if (category !== 'internal') {
-      finalInstitution = validator.escape(validator.trim(institution_external || (category === 'general' ? 'Umum' : 'Sekolah Lain')));
-      finalClass = validator.escape(validator.trim(class_grade_external || '-'));
-      finalNisn = validator.escape(validator.trim(nisn_external || '-'));
-
-      // Dokumen pendukung wajib untuk luar SMANSAGE
-      if (!req.file) {
-        req.flash('error', 'Untuk peserta Luar SMANSAGE / Umum, wajib melampirkan berkas identitas (Kartu Pelajar, KTP, atau KTM).');
-        return res.redirect('/register');
-      }
-    } else {
-      finalClass = validator.escape(validator.trim(finalClass || '-'));
-      finalNisn = validator.escape(validator.trim(finalNisn || '-'));
-
+    if (isGedeg) {
       if (!finalNisn || finalNisn.length < 8) {
         req.flash('error', 'NISN siswa SMAN 1 Gedeg wajib diisi dengan benar (minimal 8-10 digit).');
+        return res.redirect('/register');
+      }
+
+      console.log(`[Verifikasi ScholarGate] Memvalidasi siswa Gedeg: NISN ${finalNisn}, Nama: "${full_name}"...`);
+      const sgResult = await scholargateService.verifyStudent(finalNisn, full_name);
+
+      if (!sgResult.valid) {
+        req.flash('error', sgResult.message);
+        return res.redirect('/register');
+      }
+
+      isGedegVerified = 1;
+      if (sgResult.studentData && sgResult.studentData.kelas) {
+        finalClass = sgResult.studentData.kelas; // Sinkronisasi kelas resmi dari Dapodik
+      }
+      console.log(`[Verifikasi ScholarGate Sukses] Siswa ${full_name} (${finalNisn}) terverifikasi di Dapodik. Kelas: ${finalClass}`);
+    } else {
+      // Untuk peserta luar SMAN 1 Gedeg: Wajib berkas kartu pelajar / identitas
+      if (!req.file) {
+        req.flash('error', 'Untuk peserta Luar SMAN 1 Gedeg / Umum, wajib mengunggah dokumen identitas (Kartu Pelajar, KTM, atau KTP/SIM).');
         return res.redirect('/register');
       }
     }
@@ -282,12 +297,12 @@ app.post('/register', registrationLimiter, (req, res, next) => {
     // Unggah Dokumen ke S3 (IDCloudHost Object Storage) jika ada file yang diunggah
     let uploadedDocUrl = null;
     if (req.file) {
-      console.log(`[Storage S3] Mengunggah dokumen identitas untuk ${username_gzctf} (${category})...`);
+      console.log(`[Storage S3] Mengunggah dokumen identitas untuk ${username_gzctf} (${finalCategory})...`);
       const uploadResult = await storageService.uploadDocument(
         req.file.buffer,
         req.file.originalname,
         req.file.mimetype,
-        category,
+        finalCategory,
         finalNisn || username_gzctf
       );
 
@@ -296,9 +311,8 @@ app.post('/register', registrationLimiter, (req, res, next) => {
         console.log(`[Storage S3] Berkas sukses terunggah: ${uploadedDocUrl}`);
       } else {
         console.warn(`[Storage S3 Warning] Gagal upload S3: ${uploadResult.error}`);
-        // Jika luar smansage gagal upload, batalkan registrasi
-        if (category !== 'internal') {
-          req.flash('error', 'Gagal mengunggah dokumen identitas ke server penyimpanan cloud: ' + uploadResult.error);
+        if (!isGedeg) {
+          req.flash('error', 'Gagal mengunggah dokumen identitas ke penyimpanan cloud: ' + uploadResult.error);
           return res.redirect('/register');
         }
       }
@@ -371,7 +385,7 @@ app.post('/register', registrationLimiter, (req, res, next) => {
           team_name,
           team_token: teamToken,
           institution: finalInstitution,
-          category
+          category: finalCategory
         },
         {
           full_name,
@@ -383,6 +397,7 @@ app.post('/register', registrationLimiter, (req, res, next) => {
           gzctf_status: gzStatus,
           gzctf_error: gzError,
           doc_url: uploadedDocUrl,
+          is_gedeg_verified: isGedegVerified,
           registration_ip: clientIp
         },
         membersData.map(m => ({
@@ -421,7 +436,7 @@ app.post('/register', registrationLimiter, (req, res, next) => {
 
       db.createIndividualParticipant({
         full_name,
-        category,
+        category: finalCategory,
         institution: finalInstitution,
         nisn_or_id: finalNisn,
         class_grade: finalClass,
@@ -431,6 +446,7 @@ app.post('/register', registrationLimiter, (req, res, next) => {
         gzctf_status: gzStatus,
         gzctf_error: gzError,
         doc_url: uploadedDocUrl,
+        is_gedeg_verified: isGedegVerified,
         registration_ip: clientIp
       });
 
@@ -510,14 +526,23 @@ app.get('/admin', authAdmin, (req, res) => {
 app.post('/admin/settings', authAdmin, (req, res) => {
   try {
     const { 
-      is_open, mode, allowed_categories, max_team_members, event_name, max_quota,
+      is_open, mode, max_team_members, event_name, max_quota,
+      level_sma_ma, level_smk, level_mahasiswa, level_general,
       email_enable, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from,
       reg_start_at, reg_end_at
     } = req.body;
 
+    // Kumpulkan jenjang yang dipilih
+    const selectedLevels = [];
+    if (level_sma_ma) selectedLevels.push('sma_ma');
+    if (level_smk) selectedLevels.push('smk');
+    if (level_mahasiswa) selectedLevels.push('mahasiswa');
+    if (level_general) selectedLevels.push('general');
+    const allowedLevelsStr = selectedLevels.length > 0 ? selectedLevels.join(',') : 'sma_ma,smk,mahasiswa,general';
+
     db.updateSetting('is_open', is_open);
     db.updateSetting('mode', mode);
-    db.updateSetting('allowed_categories', allowed_categories);
+    db.updateSetting('allowed_levels', allowedLevelsStr);
     db.updateSetting('max_team_members', max_team_members);
     db.updateSetting('event_name', event_name);
     db.updateSetting('max_quota', max_quota);

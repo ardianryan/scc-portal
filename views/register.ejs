@@ -52,65 +52,70 @@
       </div>
     <% } else { %>
       <form action="/register" method="POST" id="regForm" enctype="multipart/form-data">
-        <!-- 1. KATEGORI & ASAL SEKOLAH -->
+        <!-- 1. ASAL SEKOLAH & KATEGORI PESERTA -->
         <div class="form-section-title">
-          <span>1. Asal & Kategori Peserta</span>
+          <span>1. Jenjang & Asal Peserta</span>
         </div>
 
+        <% 
+          const allowedLevels = (settings.allowed_levels || 'sma_ma,smk,mahasiswa,general').split(',');
+        %>
+
         <div class="form-group">
-          <label class="form-label">Kategori Peserta <span class="req">*</span></label>
-          <select name="category" id="categorySelect" class="form-control" required>
-            <option value="internal" selected>Siswa Internal SMAN 1 Gedeg (SMANSAGE)</option>
-            <% if (settings.allowed_categories === 'all') { %>
-              <option value="external_school">Siswa Sekolah Lain (SMA / SMK / MA / Sederajat)</option>
-              <option value="general">Umum / Mahasiswa / Komunitas</option>
+          <label class="form-label">Tingkat / Jenjang Kompetisi <span class="req">*</span></label>
+          <select name="level_grade" id="levelGradeSelect" class="form-control" required>
+            <% if (allowedLevels.includes('sma_ma')) { %>
+              <option value="sma_ma" selected>SMA / MA (Sekolah Menengah Atas / Madrasah Aliyah)</option>
+            <% } %>
+            <% if (allowedLevels.includes('smk')) { %>
+              <option value="smk">SMK (Sekolah Menengah Kejuruan)</option>
+            <% } %>
+            <% if (allowedLevels.includes('mahasiswa')) { %>
+              <option value="mahasiswa">Perguruan Tinggi / Mahasiswa</option>
+            <% } %>
+            <% if (allowedLevels.includes('general')) { %>
+              <option value="general">Umum / Komunitas</option>
             <% } %>
           </select>
         </div>
 
-        <!-- Field khusus Internal SMAN 1 Gedeg -->
-        <div id="internalFields">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Tingkat / Kelas <span class="req">*</span></label>
-              <select name="class_grade_internal" id="classSelectInternal" class="form-control">
-                <option value="">-- Pilih Kelas --</option>
-                <option value="X">Kelas X</option>
-                <option value="XI">Kelas XI</option>
-                <option value="XII">Kelas XII</option>
-              </select>
-              <div class="form-hint">Siswa aktif SMAN 1 Gedeg.</div>
+        <!-- Checkbox Pintar: Siswa SMAN 1 Gedeg -->
+        <div class="gz-card" style="padding: 1rem; margin-bottom: 1.25rem; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.05);">
+          <label style="display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; user-select: none;">
+            <input type="checkbox" name="is_gedeg_student" id="isGedegStudentCheckbox" value="1" style="margin-top: 0.25rem; width: 18px; height: 18px; accent-color: #10b981;">
+            <div>
+              <span style="font-weight: 700; color: #10b981; font-size: 0.95rem;">
+                🏛️ Saya adalah siswa aktif SMA Negeri 1 Gedeg (SMANSAGE)
+              </span>
+              <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.2rem;">
+                Centang opsi ini jika Anda siswa SMAN 1 Gedeg. Data NISN Anda akan diverifikasi langsung secara otomatis ke sistem kesiswaan sekolah (Dapodik / ScholarGate SSO). <strong>Tidak perlu mengunggah kartu pelajar jika lolos verifikasi.</strong>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">NISN Siswa SMANSAGE <span class="req">*</span></label>
-              <input type="text" name="nisn_internal" id="nisnInternal" class="form-control" placeholder="Contoh: 0071234567" maxlength="12">
-              <div class="form-hint">Digunakan untuk validasi silang data kesiswaan sekolah.</div>
-            </div>
+          </label>
+        </div>
+
+        <!-- Kolom Data Sekolah / Institusi -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Asal Sekolah / Universitas / Instansi <span class="req">*</span></label>
+            <input type="text" name="institution" id="institutionInput" class="form-control" placeholder="Contoh: SMAN 2 Mojokerto" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="nisnLabel">NISN / NIM / No. Identitas <span class="req">*</span></label>
+            <input type="text" name="nisn_or_id" id="nisnInput" class="form-control" placeholder="Nomor NISN / Identitas" required>
+            <div class="form-hint" id="nisnHint">Wajib diisi dengan benar untuk verifikasi kepesertaan.</div>
           </div>
         </div>
 
-        <!-- Field khusus Sekolah Lain / Umum -->
-        <div id="externalFields" style="display: none;">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Nama Sekolah / Universitas / Instansi <span class="req">*</span></label>
-              <input type="text" name="institution_external" id="instExternal" class="form-control" placeholder="Contoh: SMAN 2 Mojokerto">
-            </div>
-            <div class="form-group">
-              <label class="form-label">NISN / NIM / No. Identitas <span class="req">*</span></label>
-              <input type="text" name="nisn_external" id="nisnExternal" class="form-control" placeholder="Nomor Kartu Pelajar / Mahasiswa">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Kelas / Jurusan / Semester</label>
-            <input type="text" name="class_grade_external" class="form-control" placeholder="Contoh: XI RPL 1 atau Teknik Informatika">
-          </div>
+        <div class="form-group">
+          <label class="form-label" id="classGradeLabel">Kelas / Jurusan / Semester</label>
+          <input type="text" name="class_grade" id="classGradeInput" class="form-control" placeholder="Contoh: X-2, XI MIPA 1, atau Teknik Informatika">
         </div>
 
         <!-- Unggah Dokumen Pendukung Identitas (S3 Upload) -->
-        <div class="form-group" style="margin-top: 1rem;">
+        <div class="form-group" id="docUploadSection" style="margin-top: 1rem;">
           <label class="form-label" id="docUploadLabel">
-            📄 Dokumen Pendukung Identitas <span id="docRequiredMark" style="display: none;" class="req">*</span>
+            📄 Dokumen Pendukung Identitas <span id="docRequiredMark" class="req">*</span>
           </label>
 
           <!-- Modern Drag & Drop Zone -->
@@ -135,9 +140,7 @@
 
             <!-- Preview State (Hidden by default) -->
             <div class="dropzone-preview" id="dropzonePreview" style="display: none;">
-              <div class="preview-thumb-container" id="previewThumbContainer">
-                <!-- Image or PDF icon will be injected here -->
-              </div>
+              <div class="preview-thumb-container" id="previewThumbContainer"></div>
               <div class="preview-details">
                 <div class="preview-name" id="previewFilename">nama-berkas.png</div>
                 <div class="preview-meta">
@@ -149,8 +152,7 @@
           </div>
 
           <div class="form-hint" id="docUploadHint">
-            <strong>Internal SMANSAGE:</strong> Validasi otomatis melalui NISN (opsional upload kartu pelajar).<br>
-            <strong>Luar SMANSAGE / Umum:</strong> Wajib melampirkan foto/scan <strong>Kartu Pelajar, KTP, atau KTM</strong> aktif.
+            Wajib melampirkan foto/scan <strong>Kartu Pelajar, Kartu Tanda Mahasiswa (KTM), atau KTP/Identitas</strong> yang masih aktif.
           </div>
         </div>
 

@@ -41,50 +41,86 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================
-  // REGISTRATION FORM LOGIC
+  // REGISTRATION FORM LOGIC: JENJANG & SISWA GEDEG
   // ==========================================
-  const catSelect = document.getElementById('categorySelect');
-  const internalFields = document.getElementById('internalFields');
-  const externalFields = document.getElementById('externalFields');
-  const classSelectInternal = document.getElementById('classSelectInternal');
-  const nisnInternal = document.getElementById('nisnInternal');
-  const nisnExternal = document.getElementById('nisnExternal');
-  const instExternal = document.getElementById('instExternal');
+  const levelGradeSelect = document.getElementById('levelGradeSelect');
+  const isGedegStudentCheckbox = document.getElementById('isGedegStudentCheckbox');
+  const institutionInput = document.getElementById('institutionInput');
+  const nisnLabel = document.getElementById('nisnLabel');
+  const nisnInput = document.getElementById('nisnInput');
+  const nisnHint = document.getElementById('nisnHint');
+  const classGradeLabel = document.getElementById('classGradeLabel');
+  const classGradeInput = document.getElementById('classGradeInput');
   const docUploadInput = document.getElementById('docUploadInput');
   const docRequiredMark = document.getElementById('docRequiredMark');
+  const docUploadHint = document.getElementById('docUploadHint');
+  const docUploadSection = document.getElementById('docUploadSection');
 
-  const pwd = document.getElementById('pwd');
-  const pwdConfirm = document.getElementById('pwdConfirm');
-  const pwdMismatch = document.getElementById('pwdMismatch');
-  const regForm = document.getElementById('regForm');
+  const updateFormByLevelAndSchool = () => {
+    const isGedeg = isGedegStudentCheckbox ? isGedegStudentCheckbox.checked : false;
+    const level = levelGradeSelect ? levelGradeSelect.value : 'sma_ma';
 
-  if (catSelect) {
-    const updateCategoryFields = () => {
-      const isInternal = catSelect.value === 'internal';
-      if (isInternal) {
-        if (internalFields) internalFields.style.display = 'block';
-        if (externalFields) externalFields.style.display = 'none';
-        if (classSelectInternal) classSelectInternal.required = true;
-        if (nisnInternal) nisnInternal.required = true;
-        if (instExternal) instExternal.required = false;
-        if (nisnExternal) nisnExternal.required = false;
-        if (docUploadInput) docUploadInput.required = false;
-        if (docRequiredMark) docRequiredMark.style.display = 'none';
-      } else {
-        if (internalFields) internalFields.style.display = 'none';
-        if (externalFields) externalFields.style.display = 'block';
-        if (classSelectInternal) classSelectInternal.required = false;
-        if (nisnInternal) nisnInternal.required = false;
-        if (instExternal) instExternal.required = true;
-        if (nisnExternal) nisnExternal.required = true;
-        if (docUploadInput) docUploadInput.required = true;
-        if (docRequiredMark) docRequiredMark.style.display = 'inline';
+    if (isGedeg) {
+      // Kunci nama sekolah menjadi SMAN 1 Gedeg
+      if (institutionInput) {
+        institutionInput.value = 'SMAN 1 Gedeg';
+        institutionInput.readOnly = true;
+        institutionInput.style.backgroundColor = 'var(--bg-card-subtle)';
       }
-    };
+      if (nisnLabel) nisnLabel.innerHTML = 'NISN Siswa SMAN 1 Gedeg <span class="req">*</span>';
+      if (nisnInput) {
+        nisnInput.placeholder = 'Contoh: 0071234567 (10 digit)';
+        nisnInput.required = true;
+      }
+      if (nisnHint) nisnHint.textContent = 'Data NISN & nama akan diverifikasi silang otomatis dengan sistem kesiswaan sekolah (ScholarGate Dapodik).';
+      if (classGradeLabel) classGradeLabel.innerHTML = 'Tingkat / Kelas (Contoh: X, XI, XII)';
 
-    catSelect.addEventListener('change', updateCategoryFields);
-    updateCategoryFields(); // Init on page load
+      // Siswa Gedeg yang lolos verifikasi TIDAK WAJIB upload kartu pelajar
+      if (docRequiredMark) docRequiredMark.style.display = 'none';
+      if (docUploadInput) docUploadInput.required = false;
+      if (docUploadHint) {
+        docUploadHint.innerHTML = '<span class="badge badge-success" style="font-size: 0.75rem;">Verifikasi Otomatis Aktif</span> Siswa SMAN 1 Gedeg tidak perlu mengunggah kartu pelajar jika data NISN tervalidasi.';
+      }
+    } else {
+      // Luar SMAN 1 Gedeg
+      if (institutionInput) {
+        if (institutionInput.value === 'SMAN 1 Gedeg') institutionInput.value = '';
+        institutionInput.readOnly = false;
+        institutionInput.style.backgroundColor = '';
+        institutionInput.placeholder = level === 'mahasiswa' ? 'Contoh: Institut Teknologi Sepuluh Nopember' : (level === 'general' ? 'Contoh: Umum / Komunitas Cyber' : 'Contoh: SMAN 2 Mojokerto');
+      }
+
+      if (level === 'mahasiswa') {
+        if (nisnLabel) nisnLabel.innerHTML = 'NIM / Nomor Induk Mahasiswa <span class="req">*</span>';
+        if (nisnInput) nisnInput.placeholder = 'Nomor Induk Mahasiswa (NIM)';
+        if (classGradeLabel) classGradeLabel.innerHTML = 'Program Studi & Semester';
+        if (docUploadHint) docUploadHint.innerHTML = 'Wajib melampirkan foto/scan <strong>Kartu Tanda Mahasiswa (KTM)</strong> aktif.';
+      } else if (level === 'general') {
+        if (nisnLabel) nisnLabel.innerHTML = 'NIK / Nomor Identitas (KTP/SIM) <span class="req">*</span>';
+        if (nisnInput) nisnInput.placeholder = 'Nomor KTP / SIM / Paspor';
+        if (classGradeLabel) classGradeLabel.innerHTML = 'Pekerjaan / Instansi / Domisili';
+        if (docUploadHint) docUploadHint.innerHTML = 'Wajib melampirkan foto/scan <strong>KTP / SIM / Paspor</strong> aktif.';
+      } else {
+        // SMA/MA atau SMK
+        if (nisnLabel) nisnLabel.innerHTML = 'NISN / Nomor Pelajar <span class="req">*</span>';
+        if (nisnInput) nisnInput.placeholder = 'Nomor NISN Pelajar';
+        if (classGradeLabel) classGradeLabel.innerHTML = 'Kelas & Jurusan (Contoh: XI RPL 1)';
+        if (docUploadHint) docUploadHint.innerHTML = 'Wajib melampirkan foto/scan <strong>Kartu Pelajar</strong> atau Surat Keterangan Siswa Aktif.';
+      }
+
+      // Wajib upload berkas untuk non-Gedeg
+      if (docRequiredMark) docRequiredMark.style.display = 'inline';
+      if (docUploadInput) docUploadInput.required = true;
+    }
+  };
+
+  if (isGedegStudentCheckbox) {
+    isGedegStudentCheckbox.addEventListener('change', updateFormByLevelAndSchool);
   }
+  if (levelGradeSelect) {
+    levelGradeSelect.addEventListener('change', updateFormByLevelAndSchool);
+  }
+  updateFormByLevelAndSchool();
 
   // ==========================================
   // DRAG & DROP FILE UPLOAD ENHANCEMENT

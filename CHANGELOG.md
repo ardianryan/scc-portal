@@ -4,6 +4,24 @@ All notable changes to the **SCC::CTF Registration Portal** will be documented i
 
 ---
 
+## [1.3.0] - 2026-10-21
+
+### Added
+- **ScholarGate Identity (DAPODIK) Cross-Verification**:
+  - Direct integration with SMAN 1 Gedeg ScholarGate SSO API (`https://portal.sman1gedeg.sch.id/api/v1/members/lookup?nisn={nisn}`).
+  - Automatically verifies student active status and synchronizes official academic grade/class.
+  - SMANSAGE students verified through ScholarGate are completely exempt from uploading student ID cards.
+- **Fuzzy Name Similarity Matching & Anti-Oversharing**:
+  - Implemented token matching and Levenshtein distance similarity algorithm with tolerance for abbreviated names (e.g., `M. Ryan` vs `Muhammad Ardian Ryan`).
+  - Strict privacy protection (anti-oversharing): Invalid NISN or mismatched names return generic error feedback without leaking official student identity records.
+- **Dynamic Competition Bracket Controls**:
+  - Added checkboxes in Admin Dashboard to enable/disable specific education brackets: SMA/MA, SMK, University/Mahasiswa, and General/Open.
+  - Streamlined public registration form with smart checkbox (`Saya adalah siswa aktif SMA Negeri 1 Gedeg`) replacing rigid categorization.
+- **Database Migration**:
+  - Added non-destructive database auto-migration for `is_gedeg_verified` column in `participants` table.
+
+---
+
 ## [1.2.0] - 2026-10-19
 
 ### Added

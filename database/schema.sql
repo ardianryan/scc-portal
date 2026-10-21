@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS participants (
     gzctf_error TEXT,
     is_team_leader INTEGER DEFAULT 0, -- 1 jika ketua/individu, 0 jika anggota
     doc_url TEXT, -- URL berkas identitas di S3
+    is_gedeg_verified INTEGER DEFAULT 0, -- 1 jika lolos verifikasi API Dapodik SMAN 1 Gedeg
     registration_ip TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
