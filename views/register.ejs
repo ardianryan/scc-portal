@@ -52,31 +52,64 @@
       </div>
     <% } else { %>
       <form action="/register" method="POST" id="regForm" enctype="multipart/form-data">
-        <!-- 1. ASAL SEKOLAH & KATEGORI PESERTA -->
+        <!-- 1. KATEGORI & INFORMASI TIM -->
         <div class="form-section-title">
-          <span>1. Jenjang & Asal Peserta</span>
+          <span>1. Kategori & Asal Instansi</span>
         </div>
 
         <% 
           const allowedLevels = (settings.allowed_levels || 'sma_ma,smk,mahasiswa,general').split(',');
         %>
 
-        <div class="form-group">
-          <label class="form-label">Tingkat / Jenjang Kompetisi <span class="req">*</span></label>
-          <select name="level_grade" id="levelGradeSelect" class="form-control" required>
-            <% if (allowedLevels.includes('sma_ma')) { %>
-              <option value="sma_ma" selected>SMA / MA (Sekolah Menengah Atas / Madrasah Aliyah)</option>
-            <% } %>
-            <% if (allowedLevels.includes('smk')) { %>
-              <option value="smk">SMK (Sekolah Menengah Kejuruan)</option>
-            <% } %>
-            <% if (allowedLevels.includes('mahasiswa')) { %>
-              <option value="mahasiswa">Perguruan Tinggi / Mahasiswa</option>
-            <% } %>
-            <% if (allowedLevels.includes('general')) { %>
-              <option value="general">Umum / Komunitas</option>
-            <% } %>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tingkat / Jenjang Kompetisi <span class="req">*</span></label>
+            <select name="level_grade" id="levelGradeSelect" class="form-control" required>
+              <% if (allowedLevels.includes('sma_ma')) { %>
+                <option value="sma_ma" selected>SMA / MA (Sekolah Menengah Atas / Madrasah Aliyah)</option>
+              <% } %>
+              <% if (allowedLevels.includes('smk')) { %>
+                <option value="smk">SMK (Sekolah Menengah Kejuruan)</option>
+              <% } %>
+              <% if (allowedLevels.includes('mahasiswa')) { %>
+                <option value="mahasiswa">Perguruan Tinggi / Mahasiswa</option>
+              <% } %>
+              <% if (allowedLevels.includes('general')) { %>
+                <option value="general">Umum / Komunitas</option>
+              <% } %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asal Sekolah / Universitas / Instansi <span class="req">*</span></label>
+            <input type="text" name="institution" id="institutionInput" class="form-control" placeholder="Contoh: SMAN 2 Mojokerto" required>
+          </div>
+        </div>
+
+        <!-- Jika Mode Tim: Masukkan Nama Tim di Section 1 -->
+        <% if (settings.mode === 'team') { %>
+          <div class="form-group">
+            <label class="form-label">Nama Tim <span class="req">*</span></label>
+            <input type="text" name="team_name" class="form-control" placeholder="Contoh: GarudaCyberTeam" required>
+            <div class="form-hint">Nama tim unik yang akan tampil di scoreboard kompetisi (Maksimal <%= settings.max_team_members || 3 %> orang).</div>
+          </div>
+        <% } %>
+
+        <!-- 2. BIODATA & VERIFIKASI IDENTITAS -->
+        <div class="form-section-title" style="margin-top: 1.75rem;">
+          <span>2. <%= settings.mode === 'team' ? 'Biodata Ketua Tim' : 'Biodata Peserta' %></span>
+          <span class="badge badge-info"><%= settings.mode === 'team' ? 'Ketua Tim' : 'Peserta' %></span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap <span class="req">*</span></label>
+            <input type="text" name="full_name" id="fullNameInput" class="form-control" placeholder="Nama lengkap sesuai identitas resmi" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor WhatsApp Aktif <span class="req">*</span></label>
+            <input type="tel" name="phone_wa" class="form-control" placeholder="Contoh: 081234567890" required>
+            <div class="form-hint">Untuk koordinasi teknis dan verifikasi panitia.</div>
+          </div>
         </div>
 
         <!-- Checkbox Pintar: Siswa SMAN 1 Gedeg -->
@@ -88,31 +121,32 @@
                 Saya adalah siswa aktif SMA Negeri 1 Gedeg (SMANSAGE)
               </span>
               <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.2rem;">
-                Centang opsi ini jika Anda siswa SMAN 1 Gedeg. Data NISN akan diverifikasi langsung dengan data sekolah. <strong>Tidak perlu mengunggah kartu pelajar jika terverifikasi.</strong>
+                Centang jika Anda siswa SMAN 1 Gedeg. Cukup masukkan NISN untuk verifikasi instan dengan data kesiswaan sekolah tanpa perlu unggah kartu pelajar.
               </div>
             </div>
           </label>
         </div>
 
-        <!-- Kolom Data Sekolah / Institusi -->
+        <!-- Bagian Input Identitas -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Asal Sekolah / Universitas / Instansi <span class="req">*</span></label>
-            <input type="text" name="institution" id="institutionInput" class="form-control" placeholder="Contoh: SMAN 2 Mojokerto" required>
+            <label class="form-label" id="nisnLabel">Nomor Identitas (NISN / NIM / KTP) <span class="req">*</span></label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="text" name="nisn_or_id" id="nisnInput" class="form-control" placeholder="Nomor NISN / Identitas" required>
+              <button type="button" id="btnVerifyGedeg" class="btn btn-secondary" style="display: none; white-space: nowrap; padding: 0 1rem; font-size: 0.85rem;">
+                Verifikasi NISN
+              </button>
+            </div>
+            <div class="form-hint" id="nisnHint">Wajib diisi dengan benar untuk validasi kepesertaan.</div>
+            <div id="verifyGedegFeedback" style="margin-top: 0.4rem; font-size: 0.85rem; display: none;"></div>
           </div>
           <div class="form-group">
-            <label class="form-label" id="nisnLabel">NISN / NIM / No. Identitas <span class="req">*</span></label>
-            <input type="text" name="nisn_or_id" id="nisnInput" class="form-control" placeholder="Nomor NISN / Identitas" required>
-            <div class="form-hint" id="nisnHint">Wajib diisi dengan benar untuk verifikasi kepesertaan.</div>
+            <label class="form-label" id="classGradeLabel">Kelas / Jurusan / Tingkat</label>
+            <input type="text" name="class_grade" id="classGradeInput" class="form-control" placeholder="Contoh: X-2, XI MIPA 1, atau Teknik Informatika">
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" id="classGradeLabel">Kelas / Jurusan / Semester</label>
-          <input type="text" name="class_grade" id="classGradeInput" class="form-control" placeholder="Contoh: X-2, XI MIPA 1, atau Teknik Informatika">
-        </div>
-
-        <!-- Unggah Dokumen Pendukung Identitas (S3 Upload) -->
+        <!-- Unggah Dokumen Pendukung Identitas (Hanya tampil untuk NON-GEDEG) -->
         <div class="form-group" id="docUploadSection" style="margin-top: 1rem;">
           <label class="form-label" id="docUploadLabel">
             Dokumen Pendukung Identitas <span id="docRequiredMark" class="req">*</span>
@@ -124,21 +158,21 @@
             
             <div class="dropzone-content" id="dropzoneEmpty">
               <div class="dropzone-icon">
-                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
                   <path d="M12 12v9"/>
                   <path d="m8 16 4-4 4 4"/>
                 </svg>
               </div>
               <div class="dropzone-text">
-                <span class="dropzone-highlight">Klik untuk memilih berkas</span> atau seret & lepas ke sini
+                <span class="dropzone-highlight">Pilih berkas identitas</span> atau seret & lepas ke sini
               </div>
               <div class="dropzone-subtext">
                 Mendukung JPG, PNG, WEBP, atau PDF (Maksimal 5 MB)
               </div>
             </div>
 
-            <!-- Preview State (Hidden by default) -->
+            <!-- Preview State -->
             <div class="dropzone-preview" id="dropzonePreview" style="display: none;">
               <div class="preview-thumb-container" id="previewThumbContainer"></div>
               <div class="preview-details">
@@ -152,43 +186,14 @@
           </div>
 
           <div class="form-hint" id="docUploadHint">
-            Wajib melampirkan foto/scan <strong>Kartu Pelajar, Kartu Tanda Mahasiswa (KTM), atau KTP/Identitas</strong> yang masih aktif.
+            Wajib melampirkan foto/scan <strong>Kartu Pelajar, Kartu Tanda Mahasiswa (KTM), atau KTP/SIM</strong> yang masih aktif.
           </div>
         </div>
 
-        <!-- 2. DATA TIM (JIKA MODE TIM) -->
-        <% if (settings.mode === 'team') { %>
-          <div class="form-section-title">
-            <span>2. Informasi Tim (Beregu)</span>
-            <span class="badge badge-info">Mode Tim: Maksimal <%= settings.max_team_members || 3 %> Orang</span>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Nama Tim <span class="req">*</span></label>
-            <input type="text" name="team_name" class="form-control" placeholder="Contoh: GarudaCyberTeam" required>
-            <div class="form-hint">Nama tim unik yang akan tampil di scoreboard kompetisi.</div>
-          </div>
-
-          <div class="form-section-title" style="margin-top: 1.25rem;">
-            <span>Data Ketua Tim</span>
-          </div>
-        <% } else { %>
-          <div class="form-section-title">
-            <span>2. Biodata Peserta</span>
-            <span class="badge badge-success">Mode Individu</span>
-          </div>
-        <% } %>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Nama Lengkap <span class="req">*</span></label>
-            <input type="text" name="full_name" class="form-control" placeholder="Nama lengkap sesuai identitas" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Nomor WhatsApp Aktif <span class="req">*</span></label>
-            <input type="tel" name="phone_wa" class="form-control" placeholder="Contoh: 081234567890" required>
-            <div class="form-hint">Untuk koordinasi teknis dan pengumuman panitia.</div>
-          </div>
+        <!-- 3. KREDENSIAL LOGIN PLATFORM GZCTF -->
+        <div class="form-section-title" style="margin-top: 1.75rem;">
+          <span>3. Akun Login GZCTF <%= settings.mode === 'team' ? '(Ketua Tim)' : '' %></span>
+          <span class="badge badge-secondary">Kredensial Kompetisi</span>
         </div>
 
         <div class="form-row">

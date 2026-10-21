@@ -56,6 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const docUploadHint = document.getElementById('docUploadHint');
   const docUploadSection = document.getElementById('docUploadSection');
 
+  const fullNameInput = document.getElementById('fullNameInput');
+  const btnVerifyGedeg = document.getElementById('btnVerifyGedeg');
+  const verifyGedegFeedback = document.getElementById('verifyGedegFeedback');
+
   const updateFormByLevelAndSchool = () => {
     const isGedeg = isGedegStudentCheckbox ? isGedegStudentCheckbox.checked : false;
     const level = levelGradeSelect ? levelGradeSelect.value : 'sma_ma';
@@ -72,15 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
         nisnInput.placeholder = 'Contoh: 0071234567 (10 digit)';
         nisnInput.required = true;
       }
-      if (nisnHint) nisnHint.textContent = 'Data NISN & nama akan diverifikasi dengan data sekolah.';
-      if (classGradeLabel) classGradeLabel.innerHTML = 'Tingkat / Kelas (Contoh: X, XI, XII)';
+      if (nisnHint) nisnHint.textContent = 'Masukkan NISN dan Nama Lengkap untuk verifikasi otomatis dengan data sekolah.';
+      if (classGradeLabel) classGradeLabel.innerHTML = 'Tingkat / Kelas (Otomatis terisi jika NISN valid)';
+      if (btnVerifyGedeg) btnVerifyGedeg.style.display = 'inline-block';
 
-      // Siswa Gedeg yang lolos verifikasi TIDAK WAJIB upload kartu pelajar
-      if (docRequiredMark) docRequiredMark.style.display = 'none';
-      if (docUploadInput) docUploadInput.required = false;
-      if (docUploadHint) {
-        docUploadHint.innerHTML = '<span class="badge badge-success" style="font-size: 0.75rem;">Verifikasi Otomatis Aktif</span> Siswa SMAN 1 Gedeg tidak perlu mengunggah kartu pelajar jika data NISN tervalidasi.';
+      // Siswa Gedeg: SEMBUNYIKAN TOTAL BAGIAN UPLOAD DOKUMEN
+      if (docUploadSection) docUploadSection.style.display = 'none';
+      if (docUploadInput) {
+        docUploadInput.required = false;
+        docUploadInput.value = '';
       }
+      if (docRequiredMark) docRequiredMark.style.display = 'none';
     } else {
       // Luar SMAN 1 Gedeg
       if (institutionInput) {
@@ -89,6 +95,15 @@ document.addEventListener('DOMContentLoaded', () => {
         institutionInput.style.backgroundColor = '';
         institutionInput.placeholder = level === 'mahasiswa' ? 'Contoh: Institut Teknologi Sepuluh Nopember' : (level === 'general' ? 'Contoh: Umum / Komunitas Cyber' : 'Contoh: SMAN 2 Mojokerto');
       }
+
+      if (btnVerifyGedeg) btnVerifyGedeg.style.display = 'none';
+      if (verifyGedegFeedback) {
+        verifyGedegFeedback.style.display = 'none';
+        verifyGedegFeedback.innerHTML = '';
+      }
+
+      // Tampilkan bagian upload dokumen
+      if (docUploadSection) docUploadSection.style.display = 'block';
 
       if (level === 'mahasiswa') {
         if (nisnLabel) nisnLabel.innerHTML = 'NIM / Nomor Induk Mahasiswa <span class="req">*</span>';
@@ -113,6 +128,84 @@ document.addEventListener('DOMContentLoaded', () => {
       if (docUploadInput) docUploadInput.required = true;
     }
   };
+
+  // Real-time AJAX Verification for SMAN 1 Gedeg
+  const performGedegVerification = async () => {
+    if (!isGedegStudentCheckbox || !isGedegStudentCheckbox.checked) return;
+    const nisn = (nisnInput ? nisnInput.value : '').trim();
+    const fullName = (fullNameInput ? fullNameInput.value : '').trim();
+
+    if (!fullName) {
+      if (verifyGedegFeedback) {
+        verifyGedegFeedback.style.display = 'block';
+        verifyGedegFeedback.style.color = 'var(--color-warning)';
+        verifyGedegFeedback.textContent = 'Harap isi Nama Lengkap terlebih dahulu sebelum memverifikasi NISN.';
+      }
+      return;
+    }
+
+    if (!nisn || nisn.length < 8) {
+      if (verifyGedegFeedback) {
+        verifyGedegFeedback.style.display = 'block';
+        verifyGedegFeedback.style.color = 'var(--color-warning)';
+        verifyGedegFeedback.textContent = 'Masukkan NISN yang valid (minimal 8-10 digit).';
+      }
+      return;
+    }
+
+    if (btnVerifyGedeg) {
+      btnVerifyGedeg.disabled = true;
+      btnVerifyGedeg.textContent = 'Memverifikasi...';
+    }
+
+    try {
+      const res = await fetch('/api/verify-gedeg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nisn, full_name: fullName })
+      });
+      const data = await res.json();
+
+      if (verifyGedegFeedback) {
+        verifyGedegFeedback.style.display = 'block';
+        if (data.success) {
+          verifyGedegFeedback.style.color = 'var(--color-success)';
+          verifyGedegFeedback.innerHTML = 'Terverifikasi: Siswa aktif SMAN 1 Gedeg.';
+          if (data.kelas && classGradeInput) {
+            classGradeInput.value = data.kelas;
+          }
+        } else {
+          verifyGedegFeedback.style.color = 'var(--color-error)';
+          verifyGedegFeedback.textContent = data.message || 'Verifikasi gagal: Data tidak sesuai.';
+        }
+      }
+    } catch (err) {
+      if (verifyGedegFeedback) {
+        verifyGedegFeedback.style.display = 'block';
+        verifyGedegFeedback.style.color = 'var(--color-error)';
+        verifyGedegFeedback.textContent = 'Gagal menghubungi server verifikasi sekolah.';
+      }
+    } finally {
+      if (btnVerifyGedeg) {
+        btnVerifyGedeg.disabled = false;
+        btnVerifyGedeg.textContent = 'Verifikasi NISN';
+      }
+    }
+  };
+
+  if (btnVerifyGedeg) {
+    btnVerifyGedeg.addEventListener('click', performGedegVerification);
+  }
+
+  // Trigger verify saat tekan Enter di kolom NISN jika siswa Gedeg
+  if (nisnInput) {
+    nisnInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && isGedegStudentCheckbox && isGedegStudentCheckbox.checked) {
+        e.preventDefault();
+        performGedegVerification();
+      }
+    });
+  }
 
   if (isGedegStudentCheckbox) {
     isGedegStudentCheckbox.addEventListener('change', updateFormByLevelAndSchool);

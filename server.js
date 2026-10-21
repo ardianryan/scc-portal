@@ -153,6 +153,39 @@ function checkRegistrationStatus(settings) {
   return { isOpen: true };
 }
 
+// Endpoint Ajax Real-time Verifikasi NISN Siswa SMAN 1 Gedeg
+app.post('/api/verify-gedeg', async (req, res) => {
+  try {
+    const { nisn, full_name } = req.body;
+    if (!nisn || !full_name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nama lengkap dan nomor NISN wajib diisi.'
+      });
+    }
+
+    const result = await scholargateService.verifyStudent(nisn, full_name);
+    if (!result.valid) {
+      return res.json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Siswa aktif terverifikasi!',
+      kelas: result.studentData ? result.studentData.kelas : null
+    });
+  } catch (err) {
+    console.error('[API Verify Gedeg Error]', err.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Gagal menghubungi server verifikasi sekolah.'
+    });
+  }
+});
+
 // Form Pendaftaran (Step 2)
 app.get('/register', (req, res) => {
   // Wajib telah membaca dan menyetujui pedoman regulasi terlebih dahulu
