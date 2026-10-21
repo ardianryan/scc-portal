@@ -106,19 +106,21 @@ class ScholargateService {
 
     try {
       const url = `${this.apiUrl}/api/v1/members/lookup?nisn=${encodeURIComponent(cleanNisn)}`;
+      
+      // Kirim Origin DAN Referer lengkap dengan domain portal registrasi
+      const originDomain = (process.env.APP_URL || 'https://reg-scc.sman1gedeg.sch.id').replace(/\/+$/, '');
       const reqHeaders = {
         'X-API-Key': this.apiKey,
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'User-Agent': 'SCC-CTF-Portal/1.0',
+        'Origin': originDomain,
+        'Referer': `${originDomain}/register`
       };
 
-      // Teruskan origin portal agar validasi domain di ScholarGate lolos
-      if (config.GZCTF_PUBLIC_URL) {
-        reqHeaders['Origin'] = config.GZCTF_PUBLIC_URL.replace(/\/+$/, '');
-      }
-
+      console.log(`[ScholarGate Request] Menghubungi ${url} dengan Origin: ${originDomain}`);
       const response = await axios.get(url, {
         headers: reqHeaders,
-        timeout: 8000
+        timeout: 10000
       });
 
       if (!response.data || !response.data.found || !response.data.data) {
@@ -164,14 +166,24 @@ class ScholargateService {
       };
 
     } catch (err) {
-      if (err.response && err.response.status === 404) {
-        return {
-          valid: false,
-          message: 'NISN tidak terdaftar sebagai siswa SMAN 1 Gedeg.'
-        };
+      if (err.response) {
+        console.error(`[ScholarGate API Error] Status: ${err.response.status}, Data:`, err.response.data);
+        if (err.response.status === 404) {
+          return {
+            valid: false,
+            message: 'NISN tidak terdaftar sebagai siswa SMAN 1 Gedeg.'
+          };
+        }
+        if (err.response.status === 401 || err.response.status === 403) {
+          return {
+            valid: false,
+            message: `Autentikasi API ditolak oleh ScholarGate (${err.response.data?.message || err.response.status}).`
+          };
+        }
+      } else {
+        console.error('[ScholarGate Network Error]', err.message);
       }
 
-      console.error('[ScholarGate API Error]', err.message);
       return {
         valid: false,
         message: 'Gagal melakukan verifikasi ke portal sekolah SMAN 1 Gedeg. Silakan coba beberapa saat lagi.'
