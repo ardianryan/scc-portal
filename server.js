@@ -93,6 +93,7 @@ app.use((req, res, next) => {
   res.locals.config = config;
   res.locals.messages = req.flash();
   res.locals.admin = req.session ? req.session.admin : null;
+  res.locals.hasAcceptedWizard = !!(req.session && req.session.hasAcceptedWizard);
   next();
 });
 
@@ -154,6 +155,12 @@ function checkRegistrationStatus(settings) {
 
 // Form Pendaftaran (Step 2)
 app.get('/register', (req, res) => {
+  // Wajib telah membaca dan menyetujui pedoman regulasi terlebih dahulu
+  if (!req.session.hasAcceptedWizard) {
+    req.flash('error', 'Silakan baca dan setujui pedoman & regulasi kompetisi terlebih dahulu.');
+    return res.redirect('/pedoman');
+  }
+
   const settings = db.getSettings();
   const statusCheck = checkRegistrationStatus(settings);
   res.render('register', { settings, statusCheck });

@@ -17,7 +17,11 @@
     </a>
     <div class="nav-links">
       <a href="/pedoman" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'wizard' ? 'active' : '' %>">Pedoman & Regulasi</a>
-      <a href="/register" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'register' ? 'active' : '' %>">Pendaftaran</a>
+      <% if (locals.hasAcceptedWizard || (typeof activeNav !== 'undefined' && activeNav === 'register')) { %>
+        <a href="/register" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'register' ? 'active' : '' %>">Pendaftaran</a>
+      <% } else { %>
+        <a href="/pedoman" class="nav-link">Pendaftaran</a>
+      <% } %>
       <a href="<%= config.GZCTF_PUBLIC_URL %>" target="_blank" rel="noopener noreferrer" class="nav-link">Platform CTF ↗</a>
       <% if (locals.admin) { %>
         <a href="/admin" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'admin' ? 'active' : '' %>">Panel Admin</a>

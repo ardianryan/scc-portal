@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nisnInput.placeholder = 'Contoh: 0071234567 (10 digit)';
         nisnInput.required = true;
       }
-      if (nisnHint) nisnHint.textContent = 'Data NISN & nama akan diverifikasi silang otomatis dengan sistem kesiswaan sekolah (ScholarGate Dapodik).';
+      if (nisnHint) nisnHint.textContent = 'Data NISN & nama akan diverifikasi dengan data sekolah.';
       if (classGradeLabel) classGradeLabel.innerHTML = 'Tingkat / Kelas (Contoh: X, XI, XII)';
 
       // Siswa Gedeg yang lolos verifikasi TIDAK WAJIB upload kartu pelajar
