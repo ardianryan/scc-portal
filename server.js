@@ -707,4 +707,7 @@ app.listen(config.PORT, () => {
   console.log(`   Admin Login: http://localhost:${config.PORT}/admin/login`);
   console.log(`   GZCTF Target: ${config.GZCTF_URL}`);
   console.log(`===================================================`);
+
+  // Jalankan background worker queue email bertahap (setiap 7 detik per email)
+  mailService.startQueueDaemon(7000);
 });

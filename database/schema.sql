@@ -52,6 +52,22 @@ CREATE TABLE IF NOT EXISTS participants (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabel Antrean Email (Queue Pengiriman Bertahap Anti-Spam)
+CREATE TABLE IF NOT EXISTS email_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recipient_email TEXT NOT NULL,
+    recipient_name TEXT,
+    subject TEXT NOT NULL,
+    html_content TEXT NOT NULL,
+    status TEXT DEFAULT 'pending', -- 'pending', 'processing', 'sent', 'failed'
+    attempts INTEGER DEFAULT 0,
+    max_attempts INTEGER DEFAULT 3,
+    last_error TEXT,
+    scheduled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sent_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Inisialisasi Default Settings jika belum ada
 INSERT OR IGNORE INTO settings (key, value, description) VALUES
 ('is_open', '1', 'Status pendaftaran (1 = Buka, 0 = Tutup)'),

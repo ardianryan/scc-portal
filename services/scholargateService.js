@@ -106,11 +106,18 @@ class ScholargateService {
 
     try {
       const url = `${this.apiUrl}/api/v1/members/lookup?nisn=${encodeURIComponent(cleanNisn)}`;
+      const reqHeaders = {
+        'X-API-Key': this.apiKey,
+        'Accept': 'application/json'
+      };
+
+      // Teruskan origin portal agar validasi domain di ScholarGate lolos
+      if (config.GZCTF_PUBLIC_URL) {
+        reqHeaders['Origin'] = config.GZCTF_PUBLIC_URL.replace(/\/+$/, '');
+      }
+
       const response = await axios.get(url, {
-        headers: {
-          'X-API-Key': this.apiKey,
-          'Accept': 'application/json'
-        },
+        headers: reqHeaders,
         timeout: 8000
       });
 

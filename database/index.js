@@ -36,6 +36,24 @@ try {
     db.exec("ALTER TABLE participants ADD COLUMN is_gedeg_verified INTEGER DEFAULT 0;");
     console.log("[Database] Migration: Kolom is_gedeg_verified berhasil ditambahkan ke tabel participants.");
   }
+
+  // Buat tabel email_queue jika belum ada
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS email_queue (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      recipient_email TEXT NOT NULL,
+      recipient_name TEXT,
+      subject TEXT NOT NULL,
+      html_content TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      attempts INTEGER DEFAULT 0,
+      max_attempts INTEGER DEFAULT 3,
+      last_error TEXT,
+      scheduled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      sent_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 } catch (e) {
   console.error("[Database] Migration column check error:", e.message);
 }
@@ -199,5 +217,43 @@ module.exports = {
   updateParticipantGzStatus(participantId, status, errorMsg = null) {
     return db.prepare('UPDATE participants SET gzctf_status = ?, gzctf_error = ? WHERE id = ?')
       .run(status, errorMsg, participantId);
+  },
+
+  // ==========================================
+  // EMAIL QUEUE HELPERS (Anti-Spam & Pengiriman Bertahap)
+  // ==========================================
+  enqueueEmail(recipientEmail, recipientName, subject, htmlContent, delaySeconds = 0) {
+    const scheduledAt = new Date(Date.now() + (delaySeconds * 1000)).toISOString();
+    return db.prepare(`
+      INSERT INTO email_queue (recipient_email, recipient_name, subject, html_content, scheduled_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(recipientEmail, recipientName, subject, htmlContent, scheduledAt);
+  },
+
+  getNextPendingEmail() {
+    return db.prepare(`
+      SELECT * FROM email_queue 
+      WHERE status = 'pending' AND scheduled_at <= datetime('now')
+      ORDER BY id ASC LIMIT 1
+    `).get();
+  },
+
+  markEmailSent(id) {
+    return db.prepare(`
+      UPDATE email_queue 
+      SET status = 'sent', sent_at = datetime('now') 
+      WHERE id = ?
+    `).run(id);
+  },
+
+  markEmailFailed(id, errorMsg) {
+    return db.prepare(`
+      UPDATE email_queue 
+      SET status = CASE WHEN attempts + 1 >= max_attempts THEN 'failed' ELSE 'pending' END,
+          attempts = attempts + 1,
+          last_error = ?,
+          scheduled_at = datetime('now', '+2 minutes')
+      WHERE id = ?
+    `).run(errorMsg, id);
   }
 };

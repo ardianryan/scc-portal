@@ -121,16 +121,17 @@ class MailService {
     `;
 
     try {
-      console.log(`[MailService] Mengirim email Master Summary ke Ketua (${leaderInfo.email})...`);
-      const info = await transporter.sendMail({
-        from: fromAddress,
-        to: leaderInfo.email,
-        subject: `[SCC::CTF 2026] Data Akun Tim "${teamInfo.team_name}" - Ketua & Seluruh Anggota`,
-        html: htmlBody
-      });
-      return { success: true, messageId: info.messageId };
+      console.log(`[MailService Queue] Menjadwalkan email Master Summary ke Ketua (${leaderInfo.email})...`);
+      db.enqueueEmail(
+        leaderInfo.email,
+        leaderInfo.full_name,
+        `[SCC::CTF 2026] Data Akun Tim "${teamInfo.team_name}" - Ketua & Seluruh Anggota`,
+        htmlBody,
+        0 // Segera antrekan
+      );
+      return { success: true };
     } catch (err) {
-      console.error('[MailService Error Leader]', err.message);
+      console.error('[MailService Queue Error Leader]', err.message);
       return { success: false, error: err.message };
     }
   }
@@ -205,16 +206,17 @@ class MailService {
     `;
 
     try {
-      console.log(`[MailService] Mengirim email akun anggota ke ${member.email}...`);
-      await transporter.sendMail({
-        from: fromAddress,
-        to: member.email,
-        subject: `[SCC::CTF 2026] Akun Kompetisi Kamu di Tim "${teamName}"`,
-        html: htmlBody
-      });
+      console.log(`[MailService Queue] Menjadwalkan email akun anggota ke ${member.email}...`);
+      db.enqueueEmail(
+        member.email,
+        member.full_name,
+        `[SCC::CTF 2026] Akun Kompetisi Kamu di Tim "${teamName}"`,
+        htmlBody,
+        30 // Jeda 30 detik agar tidak serentak dengan email ketua
+      );
       return { success: true };
     } catch (err) {
-      console.error(`[MailService Error Member ${member.username}]`, err.message);
+      console.error(`[MailService Queue Error Member ${member.username}]`, err.message);
       return { success: false, error: err.message };
     }
   }
@@ -305,18 +307,62 @@ class MailService {
     `;
 
     try {
-      console.log(`[MailService] Mengirim email konfirmasi individu ke ${participantData.email}...`);
-      await transporter.sendMail({
-        from: fromAddress,
-        to: participantData.email,
-        subject: `[SCC::CTF 2026] Akun Kompetisi Resmi - ${participantData.username_gzctf}`,
-        html: htmlBody
-      });
+      console.log(`[MailService Queue] Menjadwalkan email konfirmasi individu ke ${participantData.email}...`);
+      db.enqueueEmail(
+        participantData.email,
+        participantData.full_name,
+        `[SCC::CTF 2026] Akun Kompetisi Resmi - ${participantData.username_gzctf}`,
+        htmlBody,
+        0
+      );
       return { success: true };
     } catch (err) {
-      console.error('[MailService Error Individu]', err.message);
+      console.error('[MailService Queue Error Individu]', err.message);
       return { success: false, error: err.message };
     }
+  }
+
+  /**
+   * Worker pemroses antrean email bertahap (Queue Processor)
+   * Mengirim 1 email per siklus dengan jeda terukur untuk mencegah spam score
+   */
+  async processNextQueueItem() {
+    const settings = db.getSettings();
+    if (settings.email_enable === '0') return;
+
+    const item = db.getNextPendingEmail();
+    if (!item) return;
+
+    const fromAddress = settings.smtp_from || config.SMTP_FROM;
+    const transporter = this.getTransporter();
+
+    try {
+      console.log(`[MailQueue Worker] Mengirim email antrean #${item.id} ke ${item.recipient_email}...`);
+      await transporter.sendMail({
+        from: fromAddress,
+        to: item.recipient_email,
+        subject: item.subject,
+        html: item.html_content
+      });
+      db.markEmailSent(item.id);
+      console.log(`[MailQueue Worker] Sukses terkirim email #${item.id} (${item.recipient_email})`);
+    } catch (err) {
+      console.error(`[MailQueue Worker Error #${item.id}]`, err.message);
+      db.markEmailFailed(item.id, err.message);
+    }
+  }
+
+  /**
+   * Menjalankan daemon background worker antrean email
+   * Interval: memeriksa antrean setiap 5-10 detik secara bertahap
+   */
+  startQueueDaemon(intervalMs = 7000) {
+    if (this._daemonInterval) return;
+    console.log(`[MailQueue Daemon] Berjalan dengan interval pengiriman bertahap ${intervalMs / 1000} detik...`);
+    
+    this._daemonInterval = setInterval(() => {
+      this.processNextQueueItem().catch(e => console.error('[MailQueue Tick Error]', e.message));
+    }, intervalMs);
   }
 }
 
