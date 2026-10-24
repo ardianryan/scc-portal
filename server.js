@@ -638,6 +638,67 @@ app.post('/admin/settings', authAdmin, (req, res) => {
   res.redirect('/admin');
 });
 
+// Test Email Sending
+app.post('/admin/test-email', authAdmin, async (req, res) => {
+  const { test_email } = req.body;
+  if (!test_email || !validator.isEmail(test_email)) {
+    req.flash('error', 'Masukkan alamat email tujuan uji coba yang valid.');
+    return res.redirect('/admin');
+  }
+
+  try {
+    await mailService.sendTestEmail(test_email);
+    req.flash('success', `Email uji coba berhasil dikirim ke ${test_email}. Silakan cek kotak masuk atau folder spam.`);
+  } catch (err) {
+    req.flash('error', `Gagal mengirim email uji coba: ${err.message}`);
+  }
+  res.redirect('/admin');
+});
+
+// Email Template Visual Preview Route for Admin
+app.get('/admin/email-preview', authAdmin, (req, res) => {
+  const type = req.query.type || 'leader';
+  const settings = db.getSettings();
+
+  if (type === 'member') {
+    const sampleMember = {
+      full_name: 'Ahmad Fauzi',
+      username: 'scc_afauzi',
+      password: 'SCC-xK9!pQ2',
+      email: 'fauzi@example.sch.id'
+    };
+    return res.send(mailService.getMemberEmailHtml('GARUDA_CYBER_ELITE', sampleMember, settings));
+  } else if (type === 'individual') {
+    const sampleParticipant = {
+      full_name: 'Ardian Ryan',
+      institution: 'SMAN 1 Gedeg',
+      class_grade: 'XII MIPA 1',
+      nisn_or_id: '0051234567',
+      username_gzctf: 'ardianr94',
+      password: 'SCC-Sec#2026',
+      gzctf_status: 'success',
+      email: 'ardianr94@gmail.com'
+    };
+    return res.send(mailService.getIndividualEmailHtml(sampleParticipant, settings));
+  } else if (type === 'test') {
+    return res.send(mailService.getTestEmailHtml('ardianr94@gmail.com', settings));
+  } else {
+    // leader
+    const sampleTeam = { team_name: 'GARUDA_CYBER_ELITE' };
+    const sampleLeader = {
+      full_name: 'Ardian Ryan',
+      username: 'scc_leader_ryan',
+      password: 'SCC-Ldr!9921',
+      email: 'ardianr94@gmail.com'
+    };
+    const sampleMembers = [
+      { full_name: 'Budi Santoso', username: 'scc_budi99', password: 'SCC-bU7#112', email: 'budi@example.sch.id' },
+      { full_name: 'Citra Kirana', username: 'scc_citra01', password: 'SCC-cT4*882', email: 'citra@example.sch.id' }
+    ];
+    return res.send(mailService.getLeaderEmailHtml(sampleTeam, sampleLeader, sampleMembers, settings));
+  }
+});
+
 // Change Admin Password
 app.post('/admin/change-password', authAdmin, (req, res) => {
   try {

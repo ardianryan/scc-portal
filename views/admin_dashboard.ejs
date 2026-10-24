@@ -151,8 +151,8 @@
         <div class="form-group">
           <label class="form-label">Status Kirim Email Konfirmasi</label>
           <select name="email_enable" class="form-control">
-            <option value="1" <%= settings.email_enable === '1' ? 'selected' : '' %>>🟢 Aktif (Kirim Tiket & Akun ke Email Peserta)</option>
-            <option value="0" <%= settings.email_enable === '0' ? 'selected' : '' %>>🔴 Nonaktif (Jangan Kirim Email)</option>
+            <option value="1" <%= settings.email_enable === '1' ? 'selected' : '' %>>Aktif (Kirim Tiket & Akun ke Email Peserta)</option>
+            <option value="0" <%= settings.email_enable === '0' ? 'selected' : '' %>>Nonaktif (Jangan Kirim Email)</option>
           </select>
         </div>
         <div class="form-group">
@@ -187,6 +187,47 @@
         </button>
       </div>
     </form>
+  </div>
+
+  <!-- UJI COBA EMAIL & PRATINJAU TEMPLATE -->
+  <div class="gz-card" style="margin-bottom: 2rem;">
+    <div class="gz-card-header">
+      <div class="gz-card-title">Uji Coba Pengiriman & Pratinjau Template Email</div>
+      <div class="gz-card-subtitle">Kirim email simulasi ke alamat tujuan untuk menguji gateway SMTP atau pratinjau tampilan HTML tiket di tab baru.</div>
+    </div>
+
+    <form action="/admin/test-email" method="POST" style="margin-bottom: 1.5rem;">
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label class="form-label">Email Penerima Uji Coba</label>
+          <input type="email" name="test_email" class="form-control" value="ardianr94@gmail.com" required placeholder="nama@email.com">
+          <div class="form-hint">Pastikan SMTP Username dan SMTP Password di form atas telah tersimpan sebelum melakukan pengujian.</div>
+        </div>
+        <div class="form-group" style="display: flex; align-items: flex-end;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; height: 42px;">
+            Kirim Email Uji Coba
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div style="border-top: 1px solid var(--border-color, #27272a); padding-top: 1rem;">
+      <label class="form-label" style="margin-bottom: 0.5rem; display: block;">Pratinjau Visual Template Email (Buka Tab Baru)</label>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="/admin/email-preview?type=leader" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+          Tiket Master Ketua Tim &nearr;
+        </a>
+        <a href="/admin/email-preview?type=member" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+          Tiket Akun Anggota &nearr;
+        </a>
+        <a href="/admin/email-preview?type=individual" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+          Tiket Pendaftar Mandiri &nearr;
+        </a>
+        <a href="/admin/email-preview?type=test" target="_blank" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+          Simulasi Email Gateway &nearr;
+        </a>
+      </div>
+    </div>
   </div>
 
   <!-- UBAH PASSWORD ADMIN -->
