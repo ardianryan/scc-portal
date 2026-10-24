@@ -54,6 +54,14 @@ try {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Default settings untuk jenjang, cakupan wilayah, dan kuota tim per instansi
+  db.exec(`
+    INSERT OR IGNORE INTO settings (key, value, description) VALUES
+    ('allowed_levels', 'sma_ma,smk', 'Jenjang peserta yang diizinkan'),
+    ('competition_scope', 'Se-Gerbangkertosusila (Gresik, Bangkalan, Mojokerto, Surabaya, Sidoarjo, Lamongan)', 'Cakupan wilayah kompetisi'),
+    ('max_teams_per_school', '3', 'Maksimal jumlah tim per sekolah/instansi');
+  `);
 } catch (e) {
   console.error("[Database] Migration column check error:", e.message);
 }
@@ -121,6 +129,17 @@ module.exports = {
   getTeamCount() {
     const row = db.prepare('SELECT COUNT(*) as count FROM teams').get();
     return row.count;
+  },
+
+  countTeamsByInstitution(institution) {
+    if (!institution) return 0;
+    const clean = institution.trim().toLowerCase();
+    const row = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM teams 
+      WHERE LOWER(TRIM(institution)) = ?
+    `).get(clean);
+    return row ? row.count : 0;
   },
 
   getAllParticipants() {

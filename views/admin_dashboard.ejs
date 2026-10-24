@@ -94,7 +94,7 @@
         <div class="form-group">
           <label class="form-label">Tingkat / Jenjang Peserta yang Dibuka</label>
           <% 
-            const levels = (settings.allowed_levels || 'sma_ma,smk,mahasiswa,general').split(',');
+            const levels = (settings.allowed_levels || 'sma_ma,smk,mahasiswa,general').split(',').map(s => s.trim());
           %>
           <div style="display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.5rem; background: var(--bg-card-subtle); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
             <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem;">
@@ -114,11 +114,27 @@
               <span>Umum / Komunitas</span>
             </label>
           </div>
-          <div class="form-hint">Pilih jenjang pendidikan yang diizinkan mendaftar kompetisi.</div>
+          <div class="form-hint" style="margin-top: 0.35rem;">
+            Format Teks Publik: <strong style="color: var(--brand-primary);"><%= typeof levelLabel !== 'undefined' ? levelLabel : 'SMA/MA & SMK Sederajat' %></strong>
+          </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Maksimal Anggota per Tim (Jika Mode Tim)</label>
+          <label class="form-label">Cakupan Wilayah Resmi</label>
+          <input type="text" name="competition_scope" class="form-control" value="<%= settings.competition_scope || 'Se-Gerbangkertosusila (Gresik, Bangkalan, Mojokerto, Surabaya, Sidoarjo, Lamongan)' %>">
+          <div class="form-hint">Nama cakupan wilayah resmi pada formulir dan halaman pedoman.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Maksimal Anggota per Tim (Mode Tim)</label>
           <input type="number" name="max_team_members" class="form-control" value="<%= settings.max_team_members || 3 %>" min="1" max="10">
+          <div class="form-hint">Jumlah total siswa per tim termasuk ketua.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Maksimal Tim per Sekolah / Instansi</label>
+          <input type="number" name="max_teams_per_school" class="form-control" value="<%= settings.max_teams_per_school || 3 %>" min="1" max="50">
+          <div class="form-hint">Membatasi jumlah tim dari satu sekolah/instansi demi pemerataan peserta.</div>
         </div>
       </div>
 

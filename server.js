@@ -123,9 +123,11 @@ app.get('/', (req, res) => {
 
 // Halaman Wizard (Pedoman, Regulasi & Panduan)
 app.get('/pedoman', (req, res) => {
-  const pedomanHtml = contentService.getPedomanHtml();
+  const settings = db.getSettings();
+  const pedomanHtml = contentService.getPedomanHtml(settings);
   const panduanHtml = contentService.getPanduanHtml();
-  res.render('wizard', { pedomanHtml, panduanHtml });
+  const levelLabel = contentService.getDynamicLevelLabel(settings.allowed_levels);
+  res.render('wizard', { settings, pedomanHtml, panduanHtml, levelLabel });
 });
 
 // Aksi Penerimaan Regulasi Wizard
@@ -228,7 +230,8 @@ app.get('/register', (req, res) => {
 
   const settings = db.getSettings();
   const statusCheck = checkRegistrationStatus(settings);
-  res.render('register', { settings, statusCheck });
+  const levelLabel = contentService.getDynamicLevelLabel(settings.allowed_levels);
+  res.render('register', { settings, statusCheck, levelLabel });
 });
 
 // Proses Submit Pendaftaran
@@ -292,6 +295,13 @@ app.post('/register', registrationLimiter, (req, res, next) => {
     nisn_or_id = validator.trim(nisn_or_id || '');
     class_grade = validator.trim(class_grade || '');
     institution = validator.trim(institution || '');
+
+    // Validasi apakah jenjang yang dipilih diizinkan oleh admin
+    const allowedLevels = (settings.allowed_levels || 'sma_ma,smk').split(',').map(s => s.trim()).filter(Boolean);
+    if (!isGedeg && !allowedLevels.includes(level_grade)) {
+      req.flash('error', `Tingkat/jenjang "${level_grade}" tidak dibuka untuk pendaftaran kompetisi saat ini.`);
+      return res.redirect('/register');
+    }
 
     // 3. Validasi Keamanan & Input
     if (!full_name || full_name.length < 3 || full_name.length > 100) {
@@ -401,6 +411,16 @@ app.post('/register', registrationLimiter, (req, res, next) => {
       if (!team_name || team_name.length < 3) {
         req.flash('error', 'Nama tim wajib diisi minimal 3 karakter.');
         return res.redirect('/register');
+      }
+
+      // Validasi kuota maksimal tim per sekolah/instansi
+      const maxTeamsPerSchool = parseInt(settings.max_teams_per_school || '3');
+      if (maxTeamsPerSchool > 0 && !isGedeg) {
+        const schoolTeamsCount = db.countTeamsByInstitution(finalInstitution);
+        if (schoolTeamsCount >= maxTeamsPerSchool) {
+          req.flash('error', `Instansi/Sekolah "${finalInstitution}" telah mencapai batas kuota maksimal pengiriman tim (${maxTeamsPerSchool} tim). Silakan hubungi panitia jika memerlukan penambahan kuota.`);
+          return res.redirect('/register');
+        }
       }
 
       // Kumpulkan data anggota tim
@@ -592,15 +612,16 @@ app.get('/admin', authAdmin, (req, res) => {
   const settings = db.getSettings();
   const participants = db.getAllParticipants();
   const teams = db.getAllTeams();
+  const levelLabel = contentService.getDynamicLevelLabel(settings.allowed_levels);
 
-  res.render('admin_dashboard', { settings, participants, teams });
+  res.render('admin_dashboard', { settings, participants, teams, levelLabel });
 });
 
 // Update Settings
 app.post('/admin/settings', authAdmin, (req, res) => {
   try {
     const { 
-      is_open, mode, max_team_members, event_name, max_quota, discord_invite_url,
+      is_open, mode, max_team_members, max_teams_per_school, competition_scope, event_name, max_quota, discord_invite_url,
       level_sma_ma, level_smk, level_mahasiswa, level_general,
       email_enable, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from,
       reg_start_at, reg_end_at
@@ -618,6 +639,8 @@ app.post('/admin/settings', authAdmin, (req, res) => {
     db.updateSetting('mode', mode);
     db.updateSetting('allowed_levels', allowedLevelsStr);
     db.updateSetting('max_team_members', max_team_members);
+    if (max_teams_per_school !== undefined) db.updateSetting('max_teams_per_school', max_teams_per_school || '3');
+    if (competition_scope !== undefined) db.updateSetting('competition_scope', competition_scope.trim());
     db.updateSetting('event_name', event_name);
     db.updateSetting('max_quota', max_quota);
     db.updateSetting('discord_invite_url', (discord_invite_url || '').trim());

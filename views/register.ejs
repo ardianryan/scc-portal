@@ -28,7 +28,11 @@
         <span>Pendaftaran Peserta <%= settings.event_name || 'SCC::CTF 2026' %></span>
       </div>
       <div class="gz-card-subtitle">
-        Lengkapi formulir di bawah ini. Akun kompetisi Anda akan otomatis disinkronkan ke platform GZCTF.
+        Tingkat <%= typeof levelLabel !== 'undefined' ? levelLabel : 'SMA/MA & SMK Sederajat' %> <%= settings.competition_scope || 'Se-Gerbangkertosusila' %>
+      </div>
+      <div style="margin-top: 0.75rem; padding: 0.6rem 0.85rem; background: rgba(42, 229, 181, 0.06); border: 1px solid rgba(42, 229, 181, 0.2); border-radius: 4px; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <span>Cakupan: <strong>Surabaya, Gresik, Bangkalan, Mojokerto, Sidoarjo, Lamongan</strong>.</span>
+        <span>Kuota: <strong>Maks. <%= settings.max_teams_per_school || 3 %> Tim / Sekolah</strong></span>
       </div>
     </div>
 

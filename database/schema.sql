@@ -83,5 +83,8 @@ INSERT OR IGNORE INTO settings (key, value, description) VALUES
 ('smtp_pass', '', 'SMTP Password'),
 ('smtp_from', 'Panitia SCC::CTF 2026 <no-reply@sman1gedeg.sch.id>', 'Nama & Alamat Pengirim'),
 ('email_enable', '0', 'Kirim email konfirmasi otomatis (1 = Ya, 0 = Tidak)'),
+('allowed_levels', 'sma_ma,smk', 'Jenjang peserta yang diizinkan (sma_ma, smk, mahasiswa, general)'),
+('competition_scope', 'Se-Gerbangkertosusila (Gresik, Bangkalan, Mojokerto, Surabaya, Sidoarjo, Lamongan)', 'Cakupan wilayah kompetisi'),
+('max_teams_per_school', '3', 'Maksimal jumlah tim per sekolah/instansi'),
 ('reg_start_at', '', 'Tanggal & Waktu Mulai Pendaftaran (ISO format)'),
 ('reg_end_at', '', 'Tanggal & Waktu Selesai Pendaftaran (ISO format)');
