@@ -8,6 +8,22 @@
       Selamat! Biodata Anda telah resmi tercatat di sistem panitia dan akun kompetisi telah disinkronkan ke platform GZCTF.
     </p>
 
+    <% if (settings && settings.discord_invite_url) { %>
+      <div style="margin: 0 auto 1.5rem auto; max-width: 580px; padding: 1.25rem; background: rgba(88, 101, 242, 0.1); border: 1px solid rgba(88, 101, 242, 0.35); border-radius: var(--radius-md); text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <div style="font-weight: 700; color: #5865f2; font-size: 1rem; margin-bottom: 0.25rem;">
+            Bergabung ke Server Discord Komunitas
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">
+            Dapatkan pengumuman teknis, panduan kompetisi, dan koordinasi langsung dengan panitia.
+          </div>
+        </div>
+        <a href="<%= settings.discord_invite_url %>" target="_blank" rel="noopener noreferrer" class="btn" style="background: #5865f2; color: #ffffff; text-decoration: none; padding: 0.6rem 1.25rem; font-weight: 600; font-size: 0.875rem; white-space: nowrap;">
+          Gabung Discord ↗
+        </a>
+      </div>
+    <% } %>
+
     <% if (participant.gzctf_status === 'success') { %>
       <div class="alert alert-success" style="max-width: 480px; margin: 0 auto 1.5rem auto; text-align: left;">
         <strong>Status Akun GZCTF:</strong> Akun berhasil diaktifkan di platform kompetisi. Anda dapat langsung login menggunakan kredensial di bawah.

@@ -551,12 +551,14 @@ app.get('/success', (req, res) => {
   const participant = db.getParticipantByUsername(username);
   if (!participant) return res.redirect('/');
 
+  const settings = db.getSettings();
+
   let teamMembers = [];
   if (participant.team_id) {
     teamMembers = db.db.prepare('SELECT * FROM participants WHERE team_id = ? AND is_team_leader = 0').all(participant.team_id);
   }
 
-  res.render('success', { participant, teamMembers });
+  res.render('success', { participant, teamMembers, settings });
 });
 
 // ==========================================
@@ -598,7 +600,7 @@ app.get('/admin', authAdmin, (req, res) => {
 app.post('/admin/settings', authAdmin, (req, res) => {
   try {
     const { 
-      is_open, mode, max_team_members, event_name, max_quota,
+      is_open, mode, max_team_members, event_name, max_quota, discord_invite_url,
       level_sma_ma, level_smk, level_mahasiswa, level_general,
       email_enable, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from,
       reg_start_at, reg_end_at
@@ -618,6 +620,7 @@ app.post('/admin/settings', authAdmin, (req, res) => {
     db.updateSetting('max_team_members', max_team_members);
     db.updateSetting('event_name', event_name);
     db.updateSetting('max_quota', max_quota);
+    db.updateSetting('discord_invite_url', (discord_invite_url || '').trim());
     db.updateSetting('reg_start_at', reg_start_at || '');
     db.updateSetting('reg_end_at', reg_end_at || '');
 

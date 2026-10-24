@@ -104,6 +104,14 @@ class MailService {
 
           <a href="${ctfUrl}" class="btn" target="_blank">Masuk ke Platform CTF &rarr;</a>
 
+          ${settings.discord_invite_url ? `
+          <div style="margin: 25px 0; padding: 15px; background: rgba(88, 101, 242, 0.1); border: 1px solid rgba(88, 101, 242, 0.35); border-radius: 6px; text-align: center;">
+            <div style="font-weight: bold; color: #5865f2; font-size: 14px; margin-bottom: 5px;">Server Discord Komunitas SCC::CTF</div>
+            <p style="font-size: 12px; color: #aaa; margin: 0 0 12px 0;">Bergabung untuk pengumuman jadwal, panduan teknis, dan diskusi dengan panitia.</p>
+            <a href="${settings.discord_invite_url}" style="display: inline-block; padding: 8px 18px; background: #5865f2; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px;" target="_blank">Gabung Discord &rarr;</a>
+          </div>
+          ` : ''}
+
           <p style="font-size: 13px; color: #969696; margin-top: 25px;">
             <strong>Petunjuk Login Peserta:</strong>
             <br>&bull; Setiap anggota tim dapat login menggunakan username & password masing-masing.
@@ -192,6 +200,14 @@ class MailService {
           </div>
 
           <a href="${ctfUrl}" class="btn" target="_blank">Login ke Platform CTF &rarr;</a>
+
+          ${settings.discord_invite_url ? `
+          <div style="margin: 20px 0; padding: 12px; background: rgba(88, 101, 242, 0.1); border: 1px solid rgba(88, 101, 242, 0.35); border-radius: 6px; text-align: center;">
+            <div style="font-weight: bold; color: #5865f2; font-size: 13px; margin-bottom: 4px;">Server Discord Komunitas SCC::CTF</div>
+            <p style="font-size: 11px; color: #aaa; margin: 0 0 10px 0;">Bergabung bersama seluruh peserta untuk koordinasi teknis.</p>
+            <a href="${settings.discord_invite_url}" style="display: inline-block; padding: 6px 14px; background: #5865f2; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 11px;" target="_blank">Gabung Discord &rarr;</a>
+          </div>
+          ` : ''}
 
           <p style="font-size: 12px; color: #999; margin-top: 20px;">
             Gunakan akun di atas untuk login ke <code>${ctfUrl}</code> dan mulai mengerjakan soal latihan bersama tim Anda!
@@ -291,6 +307,14 @@ class MailService {
           </div>
 
           <a href="${ctfUrl}" class="btn" target="_blank">Buka Platform CTF &rarr;</a>
+
+          ${settings.discord_invite_url ? `
+          <div style="margin: 25px 0; padding: 15px; background: rgba(88, 101, 242, 0.1); border: 1px solid rgba(88, 101, 242, 0.35); border-radius: 6px; text-align: center;">
+            <div style="font-weight: bold; color: #5865f2; font-size: 14px; margin-bottom: 5px;">Server Discord Komunitas SCC::CTF</div>
+            <p style="font-size: 12px; color: #aaa; margin: 0 0 12px 0;">Bergabung untuk pengumuman jadwal, panduan teknis, dan diskusi dengan panitia.</p>
+            <a href="${settings.discord_invite_url}" style="display: inline-block; padding: 8px 18px; background: #5865f2; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px;" target="_blank">Gabung Discord &rarr;</a>
+          </div>
+          ` : ''}
 
           <p style="font-size: 13px; color: #969696; margin-top: 25px;">
             <strong>Catatan Penting:</strong>

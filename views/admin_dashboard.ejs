@@ -133,6 +133,12 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="form-label">Link Undangan Discord Komunitas (Opsional)</label>
+        <input type="url" name="discord_invite_url" class="form-control" value="<%= settings.discord_invite_url || '' %>" placeholder="Contoh: https://discord.gg/xxxxxx">
+        <div class="form-hint">Jika diisi, tautan ini akan tampil di halaman konfirmasi pendaftaran sukses dan di tiket email peserta.</div>
+      </div>
+
       <!-- PENGATURAN SMTP EMAIL -->
       <div class="form-section-title" style="margin-top: 1.5rem;">
         <span>Pengaturan SMTP Email Verifikasi & Tiket Peserta</span>
