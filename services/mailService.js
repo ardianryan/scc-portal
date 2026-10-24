@@ -22,7 +22,6 @@ class MailService {
         pass: pass
       },
       tls: {
-        ciphers: 'SSLv3',
         rejectUnauthorized: false
       }
     });
